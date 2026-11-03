@@ -68,7 +68,7 @@ body{
 #gameUI{position:relative;display:none;flex-direction:column;flex:1;min-height:0}
 #gameUI.on{display:flex}
 #stageWrap{position:relative;flex:1;min-height:0;width:100%;border:4px solid var(--brown);border-radius:8px;overflow:hidden;background:#000;box-shadow:0 6px 0 rgba(0,0,0,.4)}
-canvas#scene{width:100%;height:100%;object-fit:contain;display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
+canvas#scene{width:100%;height:100%;object-fit:contain;display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000;touch-action:none}
 
 /* 数值区（独立面板，不叠加场景） */
 #statBar{
@@ -2234,6 +2234,13 @@ const UI={
   },
   /* ---- 场景编辑：摆设物件系统 ---- */
   _decSel:null,
+  _drag:null,
+  /* 目标格是否可放置（家具占位/越界/已占用），ignoreIdx 用于移动时排除自身 */
+  _cellOk(x,y,ignoreIdx){
+    if(x<0||x>14||y<4||y>14)return false;
+    const blocked=new Set(["5,12","6,12","5,13","6,13","0,4","14,4","0,13","9,13","10,13","1,5","6,7","7,7"]);
+    if(blocked.has(x+","+y))return false;
+    return !S.decor.placed.some((p,i)=>i!==ignoreIdx&&p.x===x&&p.y===y)},
   openDecor(){
     const card=k=>{const d=CFG.DECOR[k],n=(S.decor.owned[k]||0);
       const placed=(S.decor.placed||[]).filter(p=>p.id===k).length;
@@ -2245,22 +2252,41 @@ const UI={
         `<button class="pxbtn sm ${S.money>=d.cost?"":"gray"}" onclick="UI.doBuyDecor('${k}')" ${S.money>=d.cost?"":"disabled"}>购买 ${fmtY(d.cost)}</button>`}</div>`};
     let basic="",ads="";
     for(const k in CFG.DECOR){if(CFG.DECOR[k].ad)ads+=card(k);else basic+=card(k)}
-    const busy=S.decor.placed.length?`◆ 已放置 ${S.decor.placed.length} 件 · 点场景里的金色框可收回仓库`:"◆ 还没布置任何物件";
+    const placedRows=(S.decor.placed||[]).map((p,i)=>`<div style="display:flex;align-items:center;gap:8px;background:#fffaf0;border:2px solid var(--brown2);border-radius:8px;padding:6px 8px;margin-bottom:6px">
+        <span style="font-size:13px;font-weight:800;flex:1">${CFG.DECOR[p.id].name}</span>
+        <button class="pxbtn sm blue" onclick="UI.moveDecor(${i})">移动</button>
+        <button class="pxbtn sm gray" onclick="UI.recallDecor(${i})">收回</button>
+      </div>`).join("");
+    const busy=S.decor.placed.length?`◆ 已放置 ${S.decor.placed.length} 件 · 可在下方清单里移动或收回`:"◆ 还没布置任何物件";
     this.open(`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
         <h2 style="margin-bottom:0">🎨 场景布置</h2>
         <button class="pxbtn gray sm" onclick="UI.close()">✕ 关闭</button>
       </div>
-      <div class="desc">◆ 选中物件后<b>点场景地板</b>放置 · 点金色框收回<br>◆ 摆设提供小幅永久加成</div>
+      <div class="desc">◆ 选中物件后<b>点场景地板</b>放置 · <b>拖动</b>已放置物件可换位置 · 轻点收回仓库<br>◆ 摆设提供小幅永久加成</div>
+      ${placedRows?`<div style="font-size:12px;font-weight:800;color:var(--green);margin-bottom:6px">📦 已放置（${S.decor.placed.length}）</div><div style="margin-bottom:10px">${placedRows}</div>`:""}
       <div style="font-size:12px;font-weight:800;color:#6a5038;margin-bottom:6px">🛒 基础款（金币购买）</div>
       <div class="cardrow">${basic}</div>
       <div style="font-size:12px;font-weight:800;color:var(--blue);margin-bottom:6px">📺 视频专享（看视频免费解锁）</div>
       <div class="cardrow">${ads}</div>
       <div class="desc">${busy}</div>
-      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">完成布置</button></div>`);
-    $("#panelLayer").classList.add("decor");$("#panel").classList.add("decor");   // 编辑模式：面板停靠底部，露出场景可点
+      <div class="panelclose"><button class="pxbtn sm green" onclick="UI.enterSceneEdit()">🎯 去场景里拖动调整</button>
+        <button class="pxbtn gray sm" style="margin-left:8px" onclick="UI.close()">完成布置</button></div>`);
+    $("#panelLayer").classList.add("decor");$("#panel").classList.add("decor");   // 编辑模式：全屏面板 + 场景金色框
     $("#decorBar").classList.remove("on");
     this._decorEdit=true;
   },
+  enterSceneEdit(msg,keepSel){
+    if(!keepSel)this._decSel=null;   // 纯调整模式：先清空待放置选中，避免误点变成放置
+    $("#panelLayer").classList.remove("on","decor");$("#panel").classList.remove("decor");
+    this._decorEdit=true;$("#decorBar").classList.add("on");
+    UI.toast(msg||"◆ 拖动已放置物件换位置 · 轻点收回仓库","info")},
+  recallDecor(i){const p=S.decor.placed[i];if(!p)return;
+    S.decor.placed.splice(i,1);
+    UI.toast(`◆「${CFG.DECOR[p.id].name}」已收回仓库`,"info");AUD.play("click");
+    this.refresh();this.save();this.openDecor()},
+  moveDecor(i){const p=S.decor.placed[i];if(!p)return;
+    S.decor.placed.splice(i,1);this._decSel=p.id;
+    this.enterSceneEdit(`◆ 拿起「${CFG.DECOR[p.id].name}」· 点新地板放置`,true);this.refresh();this.save()},
   doSelectDecor(k){
     this._decSel=this._decSel===k?null:k;
     if(this._decSel){   // 进入放置模式：自动关面板，露出完整场景直接点地放置
@@ -2317,11 +2343,9 @@ const UI={
     diary("资金链断裂，看广告获得平台应急金续命",S.day);this.refresh();this.save()})},
   decorTap(x,y){
     /* 场景编辑点击：有选中→放置；无选中点到已放置物件→收回 */
-    const T2=16,blocked=new Set(["5,12","6,12","5,13","6,13","0,4","14,4","0,13","9,13","10,13","1,5","6,7","7,7"]);
     if(x<0||x>14||y<4||y>14)return;   // 越界/墙面不可放
-    const key=x+","+y;
     if(this._decSel){
-      if((blocked.has(key)))return UI.toast("✖ 这里放不了 · 换块空地板","bad");
+      if(!this._cellOk(x,y))return UI.toast("✖ 这里放不了 · 换块空地板","bad");
       if(S.decor.placed.some(p=>p.x===x&&p.y===y))return UI.toast("✖ 该位置已有物件","bad");
       const own=S.decor.owned[this._decSel]||0;
       if(!own)return UI.toast("✖ 仓库没有该物件 · 先购买或看视频解锁","bad");
@@ -2516,11 +2540,40 @@ $("#panelLayer").addEventListener("pointerdown",e=>{
   const[x,y]=sceneGrid(e);
   if(x>=0&&x<15&&y>=0&&y<15)UI.decorTap(x,y);
   e.stopPropagation()});
-/* 放置模式（面板已关）：直接点画布放置/收回摆设 */
+/* 放置模式（面板已关）：点画布放置；无选中时拖动已放置物件可换位置，轻点收回 */
 CV.addEventListener("pointerdown",e=>{
   if(!UI._decorEdit)return;
   const[x,y]=sceneGrid(e);
-  if(x>=0&&x<15&&y>=0&&y<15)UI.decorTap(x,y)});
+  if(x<0||x>14||y<4||y>14)return;
+  if(UI._decSel){UI.decorTap(x,y);return}
+  const i=S.decor.placed.findIndex(p=>p.x===x&&p.y===y);
+  if(i<0)return;
+  const p=S.decor.placed[i];
+  UI._drag={i,ox:p.x,oy:p.y,moved:false,attempted:false};
+  try{CV.setPointerCapture(e.pointerId)}catch(err){}
+  e.preventDefault()});
+CV.addEventListener("pointermove",e=>{
+  const d=UI._drag;if(!d)return;
+  const[x,y]=sceneGrid(e);
+  if(x<0||x>14||y<4||y>14)return;
+  if(x!==d.ox||y!==d.oy)d.attempted=true;
+  const p=S.decor.placed[d.i];if(!p)return;
+  if(UI._cellOk(x,y,d.i)&&(p.x!==x||p.y!==y)){p.x=x;p.y=y;d.moved=true}});
+CV.addEventListener("pointerup",e=>{
+  const d=UI._drag;if(!d)return;UI._drag=null;
+  const p=S.decor.placed[d.i];if(!p)return;
+  if(!d.attempted){   // 轻点 → 收回仓库
+    S.decor.placed.splice(d.i,1);
+    UI.toast(`◆「${CFG.DECOR[p.id].name}」已收回仓库`,"info");AUD.play("click");
+  }else if(!d.moved){
+    UI.toast("✖ 这里放不了 · 已放回原位","bad");
+  }else{
+    UI.toast(`◆「${CFG.DECOR[p.id].name}」已移动`,"good");AUD.play("click")}
+  UI.refresh();UI.save()});
+CV.addEventListener("pointercancel",()=>{
+  const d=UI._drag;if(!d)return;
+  const p=S.decor.placed[d.i];if(p){p.x=d.ox;p.y=d.oy}
+  UI._drag=null;UI.refresh()});
 $("#btnDecorDone").addEventListener("click",()=>UI.close());
 $("#btnDecorPanel").addEventListener("click",()=>{$("#decorBar").classList.remove("on");UI.openDecor()});
 function startGame(){
