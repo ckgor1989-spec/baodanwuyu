@@ -1,0 +1,2548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2b2330">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="data:,">
+<title>爆单物语 - 像素电商创业记</title>
+<style>
+/* ================= 像素 UI 主题 ================= */
+:root{
+  --cream:#f7e9c6; --cream2:#efdba8; --brown:#5a3a28; --brown2:#7a5230;
+  --red:#d94f45; --red2:#b23a32; --green:#5ba14e; --blue:#3f7fc1;
+  --ink:#3a2a20; --gold:#f2a24b;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{height:100%}
+body{
+  background:#2b2330; color:var(--ink);
+  font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  display:flex;justify-content:center;overflow:hidden;
+  height:100dvh;
+}
+/* 手机满屏：纵向 flex（数值区/画布/操作栏），画布吃满剩余高度 */
+#app{
+  width:min(100vw,560px);height:100dvh;position:relative;
+  display:flex;flex-direction:column;
+  padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom));
+  padding-left:calc(8px + env(safe-area-inset-left));
+  padding-right:calc(8px + env(safe-area-inset-right));
+}
+
+/* ---------- 像素边框通用件 ---------- */
+.pxbox{
+  background:var(--cream);border:3px solid var(--brown);border-radius:10px;
+  box-shadow:0 4px 0 var(--brown), inset 0 0 0 2px var(--cream2);
+}
+.pxbtn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  background:var(--red);color:#fff;font-weight:800;font-size:15px;
+  border:3px solid var(--brown);border-radius:9px;padding:9px 14px;
+  box-shadow:0 3px 0 var(--brown);cursor:pointer;letter-spacing:1px;
+  transition:transform .05s;
+}
+.pxbtn:active{transform:translateY(3px);box-shadow:0 0 0 var(--brown)}
+.pxbtn.green{background:var(--green)} .pxbtn.blue{background:var(--blue)}
+.pxbtn.gray{background:#9b8f7a}
+.pxbtn:disabled{background:#b7ab93;color:#e8ddc4;cursor:not-allowed;transform:none;box-shadow:0 3px 0 var(--brown)}
+.pxbtn.sm{font-size:12px;padding:6px 10px;border-width:2px;box-shadow:0 2px 0 var(--brown)}
+
+/* ---------- 标题屏 ---------- */
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:60;background:#2b2330;border-radius:12px;overflow:auto}
+.screen.hidden{display:none}
+.logo{
+  font-size:46px;font-weight:900;color:#fff;letter-spacing:6px;
+  text-shadow:0 4px 0 var(--brown), 0 0 0 #000, 4px 0 0 var(--brown), -4px 0 0 var(--brown), 0 -4px 0 var(--brown), 0 8px 0 rgba(0,0,0,.35);
+}
+.logo b{color:var(--gold)}
+.sub{color:#e8d8b0;font-size:15px;letter-spacing:3px}
+.help{max-width:400px;font-size:12px;line-height:1.9;color:#cdbfa0;background:#3a2f42;border:3px solid #1d1822;border-radius:10px;padding:14px 18px;display:none}
+.help.show{display:block}
+.help b{color:var(--gold)}
+
+/* ---------- 游戏主界面 ---------- */
+#gameUI{position:relative;display:none;flex-direction:column;flex:1;min-height:0}
+#gameUI.on{display:flex}
+#stageWrap{position:relative;flex:1;min-height:0;width:100%;border:4px solid var(--brown);border-radius:8px;overflow:hidden;background:#000;box-shadow:0 6px 0 rgba(0,0,0,.4)}
+canvas#scene{width:100%;height:100%;object-fit:contain;display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
+
+/* 数值区（独立面板，不叠加场景） */
+#statBar{
+  display:flex;flex-wrap:wrap;gap:5px;align-items:center;
+  margin-bottom:8px;padding:8px 12px;flex:0 0 auto;
+}
+#hud{
+  flex:1 1 100%;display:flex;flex-wrap:wrap;gap:4px;
+}
+.chip{
+  background:rgba(247,233,198,.95);border:2px solid var(--brown);border-radius:8px;
+  padding:3px 8px;font-size:12px;font-weight:800;box-shadow:0 2px 0 rgba(0,0,0,.35);
+  display:flex;align-items:center;gap:4px;white-space:nowrap;
+}
+.chip .lab{color:#8a6a4a;font-weight:700}
+.chip.warn{background:#ffd9d4;border-color:var(--red2);color:var(--red2);animation:blink 1s steps(2) infinite}
+.chip.star{color:#e88f3c}
+@keyframes blink{50%{opacity:.55}}
+#goalBar{
+  flex:1 1 auto;min-width:150px;display:flex;align-items:center;gap:10px;
+  background:rgba(43,35,48,.07);border:2px solid var(--brown2);border-radius:8px;
+  padding:4px 10px;
+}
+#goalBar .txt{font-size:11px;color:#6a5038;font-weight:800;flex:0 0 auto;display:flex;gap:10px}
+#goalBar .bar{flex:1;height:10px;background:#e4d4ac;border-radius:5px;overflow:hidden;border:2px solid var(--brown2)}
+#goalBar .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--red));transition:width .4s}
+
+/* 底部操作栏 */
+#actionbar{
+  display:flex;gap:4px;justify-content:center;align-items:center;
+  margin-top:8px;padding:6px 2px 2px;flex:0 0 auto;flex-wrap:wrap;
+  background:rgba(43,35,48,.0);
+}
+/* ---- 掌机复古按钮：硬黑边 + 斜面高光 + 扫描线 + 按下下沉（圆角版） ---- */
+#actionbar .pxbtn{
+  min-width:86px;position:relative;
+  border-radius:9px;border:3px solid #1d1822;
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.38),inset 3px 0 0 rgba(255,255,255,.14),
+             inset 0 -3px 0 rgba(0,0,0,.30),0 4px 0 #1d1822;
+  text-shadow:0 2px 0 rgba(0,0,0,.35);letter-spacing:0;
+  background-image:linear-gradient(rgba(0,0,0,.09) 1px,transparent 1px);
+  background-size:100% 3px;
+}
+#actionbar .pxbtn:active{
+  transform:translateY(4px);
+  box-shadow:inset 0 3px 0 rgba(0,0,0,.28),inset 0 -1px 0 rgba(255,255,255,.12),0 0 0 #1d1822;
+  background-image:none;
+}
+#actionbar .pxbtn:disabled{
+  border-color:#1d1822;background-image:linear-gradient(rgba(0,0,0,.09) 1px,transparent 1px);
+  background-size:100% 3px;
+}
+#actionbar .pxbtn .badge{
+  border-color:#1d1822;top:-7px;right:-7px;
+  box-shadow:0 2px 0 #1d1822;
+}
+/* ---- 顶部状态栏同套掌机复古化（圆角版，无投影） ---- */
+#statBar{
+  border-radius:10px;border-color:#1d1822;
+  box-shadow:inset 0 0 0 2px var(--cream2);
+}
+.chip{
+  border-radius:8px;border:2px solid #1d1822;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.5),inset 0 -2px 0 rgba(0,0,0,.12);
+  background-image:linear-gradient(rgba(0,0,0,.06) 1px,transparent 1px);background-size:100% 3px;
+}
+#goalBar{border-radius:8px;border-color:#1d1822;box-shadow:none}
+#goalBar .bar{border-radius:5px;border-color:#1d1822}
+#goalBar .fill{background-image:linear-gradient(rgba(0,0,0,.12) 1px,transparent 1px);background-size:100% 3px}
+#statBar .pxbtn{
+  border-radius:9px;border:3px solid #1d1822;
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.38),inset 0 -3px 0 rgba(0,0,0,.30);
+  background-image:linear-gradient(rgba(0,0,0,.09) 1px,transparent 1px);background-size:100% 3px;
+}
+#statBar .pxbtn:active{
+  transform:translateY(2px);
+  box-shadow:inset 0 3px 0 rgba(0,0,0,.28);background-image:none;
+}
+.pxbtn .badge{
+  position:absolute;top:-8px;right:-8px;background:var(--red);border:2px solid var(--brown);
+  color:#fff;font-size:11px;font-weight:900;border-radius:99px;padding:0 6px;min-width:20px;
+  display:none;
+}
+.pxbtn .badge.on{display:block;animation:pop .3s}
+#btnLoan{position:relative}
+@keyframes pop{0%{transform:scale(.4)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+.spdgrp{display:flex;gap:3px;margin-left:4px}
+.spdgrp .pxbtn.sm{min-width:38px}
+.spdgrp .pxbtn.sm.act{background:var(--gold);color:var(--ink)}
+
+/* 面板（决策弹窗） */
+#panelLayer{position:absolute;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(20,14,24,.55)}
+#panelLayer.on{display:flex}
+#panelLayer.decor{background:rgba(20,14,24,.1)}   /* 场景编辑：遮罩变淡可点 */
+#panel{width:min(94%,420px);max-height:86%;overflow:auto;padding:14px}
+#panel.decor{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:min(96%,430px);max-height:52%;box-shadow:0 -4px 14px rgba(0,0,0,.3)}
+/* 放置模式悬浮条：面板关闭后仍可完成/返回布置面板 */
+#decorBar{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:45;display:none;gap:8px}
+#decorBar.on{display:flex}
+#panel h2{font-size:19px;color:var(--brown);margin-bottom:4px;letter-spacing:2px}
+#panel .desc{font-size:12px;color:#8a6a4a;margin-bottom:12px}
+.cardrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.card{border:3px solid var(--brown2);border-radius:9px;background:#fffaf0;padding:10px;display:flex;flex-direction:column;gap:6px}
+.card h3{font-size:14px}
+.card .num{font-size:12px;color:#6a5038;line-height:1.7}
+.card .tag{font-size:10px;background:var(--gold);border-radius:6px;padding:1px 6px;display:inline-block;font-weight:800}
+.tag.tag-lit{background:linear-gradient(90deg,var(--gold),#ffe9a8,var(--gold));background-size:200% 100%;animation:tagShine 2.2s linear infinite}
+@keyframes tagShine{to{background-position:-200% 0}}
+.ticket{border:3px solid var(--red2);background:#fff2f0}
+.ticket h3{color:var(--red2)}
+.progrow{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700}
+.mbar{flex:1;height:9px;background:#e4d4ac;border:2px solid var(--brown2);border-radius:5px;overflow:hidden}
+.mbar i{display:block;height:100%;background:var(--green)}
+.mbar i.heat{background:var(--red)}
+.panelclose{margin-top:6px;text-align:center}
+
+/* Toast */
+#toasts{position:absolute;right:8px;bottom:14px;z-index:40;display:flex;flex-direction:column;gap:5px;pointer-events:none;max-width:200px}
+.toast{
+  background:rgba(247,233,198,.97);border:2px solid var(--brown);border-left-width:8px;border-radius:8px;
+  padding:7px 10px;font-size:12px;font-weight:700;box-shadow:0 3px 0 rgba(0,0,0,.3);
+  animation:tin .25s;line-height:1.5;
+}
+.toast.good{border-left-color:var(--green)} .toast.bad{border-left-color:var(--red)} .toast.info{border-left-color:var(--blue)}
+@keyframes tin{from{transform:translateX(30px);opacity:0}}
+
+/* 大横幅（升级/爆单） */
+#banner{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:55;pointer-events:none}
+#banner.on{display:flex}
+#banner .inner{
+  background:var(--cream);border:4px solid var(--brown);border-radius:12px;padding:16px 30px;text-align:center;
+  box-shadow:0 6px 0 var(--brown);animation:bnr 2.6s forwards;
+}
+#banner .t1{font-size:26px;font-weight:900;color:var(--red);letter-spacing:4px}
+#banner .t2{font-size:13px;color:#6a5038;font-weight:700;margin-top:4px}
+@keyframes bnr{0%{transform:scale(.5);opacity:0}12%{transform:scale(1.08);opacity:1}20%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
+
+/* 结算 */
+#endScreen .rank{font-size:110px;font-weight:900;color:var(--gold);text-shadow:0 6px 0 var(--brown),-4px 0 0 var(--brown),4px 0 0 var(--brown),0 -4px 0 var(--brown);line-height:1}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px 26px;font-size:14px;color:#e8d8b0;font-weight:700}
+.stats span{color:var(--gold)}
+.diarybox{width:min(92vw,430px);max-height:30vh;overflow:auto;background:#3a2f42;border:3px solid #1d1822;border-radius:10px;padding:12px 16px;font-size:12px;line-height:2;color:#cdbfa0;text-align:left}
+.diarybox b{color:var(--gold);font-family:monospace;margin-right:8px}
+.diarybox .dt{color:var(--gold);font-weight:800;margin-bottom:4px}
+
+/* 小屏（窄机或矮窗）紧凑化：按钮/徽章/数值缩小，保证一屏放下 */
+@media (max-width:640px),(max-height:720px){
+  .logo{font-size:34px}
+  .pxbtn{font-size:12px;padding:7px 8px}
+  /* 操作栏 5 列网格：8 主按钮 + 切场景 + 速度组正好两行 */
+  #actionbar{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:6px 0 2px}
+  #actionbar .pxbtn{min-width:0;padding:7px 2px;font-size:11px}
+  #actionbar .pxbtn.sm{min-width:0;padding:5px 0;font-size:11px}
+  .spdgrp{margin-left:0}
+  .chip{font-size:11px;padding:2px 6px}
+  #statBar{gap:5px;padding:7px 10px}
+  #goalBar{min-width:120px}
+  #panel{max-height:92%}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ 标题屏 ============ -->
+  <div id="titleScreen" class="screen">
+    <div class="logo">爆<b>单</b>物语</div>
+    <div class="sub">— 像素电商创业记 · 自由经营 —</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+      <button class="pxbtn" id="btnNew">▶ 新的创业</button>
+      <button class="pxbtn green" id="btnContinue" style="display:none">↻ 继续营业</button>
+      <button class="pxbtn blue sm" id="btnHelp" style="align-self:center">玩法说明</button>
+    </div>
+    <div class="help" id="helpBox">
+      <b>目标：</b>把营业额做到 ¥40,000，之后开启<b>进阶目标链</b>（10 万→20 万→…→百万传奇），每阶段送永久徽章加成。<b>没有期限</b>，想退休随时到升级面板点「结束经营」收官；资金低于 -¥1,500 则破产。<br>
+      <b>节奏：</b>一天约 3 秒，随时暂停；关掉页面自动存档，摸鱼时开一局刚好。<br>
+      <b>投流：</b>花钱买曝光，爆款期投流收益最大。<br>
+      <b>发货：</b>产能不足会积压订单、口碑下跌——爆单也可能是灾难！<br>
+      <b>售后：</b>限时 4 天的工单，处理方式决定口碑走向。<br>
+      <b>新品：</b>研发有三步决策——供应商/品控/预热；<b>品类按梯队解锁</b>：生意做大了才能研发高价品类，别想开局躺赢！研发完成后还要<b>美工做素材</b>才能上架，素材质量决定首发热度；热度会退烧，<b>卖得越火爆退烧越快</b>，同款重复研发还会"内卷"涨价！<br>
+      <b>美工部：</b>招聘美工可加速素材、提升首发质量；美工和运营凑一起偶尔会吵架——力挺谁、还是请客团建，你来断！<br>
+      <b>隐藏品类：</b>达成特殊条件可解锁 3 个神秘品类（联名款/盲盒/AI 硬件），高研发投入、高客单价！<br>
+      <b>道具：</b>后期金币花在刀刃上——火箭投流、云仓救火、打包机、爆款秘籍…营业额每破 2 万还送道具！<br>
+      <b>贷款：</b>资金周转不灵可点右上角 🏦 向银行借款（额度随称号提升），每天 1.5% 利滚利——救急不救穷，尽快还清！<br>
+      <b>事件：</b>经营中会冒出事件卡——达人合作、竞品降价、平台抽查…每张卡都有对应的<b>人物对话形象</b>，你的选择直接影响数值！<br>
+      <b>布置：</b>点右上角 🎨 打开「场景布置」，点地板自由装点办公室！基础款（绿植/整理架）金币购买，麦克风、咖啡机、鱼缸、猫窝等 10 件好物<b>看视频免费解锁</b>——件件都有小幅加成！<br>
+      <b>直播：</b>200 粉丝解锁。选品有适配度评级，开播风格三种任选，小心缺货翻车！<br>
+      <b>员工：</b>六种正式员工会成长也有疲劳——打包/客服/运营/主播/美工，仓管员还会自动补货；太累会罢工，记得让他们歇一天。<br>
+      <b>称号：</b>每个称号等级带永久加成——曝光、产能、成本、涨粉，爬得越高店越强。<br>
+      <b>产业：</b>升级面板里可投资云仓分部、自建物流、MCN 基地等产业——大额资金的长期出口，永久加成但要付维护费。<br>
+      <b>成就：</b>10 项成就可解锁，集齐徽章还有小额永久加成。<br>
+      <b>大促：</b>每 15 天平台大促日，要不要砸钱抢坑位自己定！<br>
+      <b>大事记：</b>投资人、税务稽查、年会、巨头收购……公司级抉择将深度改变创业走向！<br>
+      <b>沉浸：</b>开声音！8-bit 音效随经营起伏；员工会闲聊抱怨，顾客会排队上门，事件由"来客"敲门前触发。<br>
+      <b>操作：</b>底部按钮打开决策面板（自动暂停），空格暂停，1~6 快捷开面板。
+    </div>
+  </div>
+
+  <!-- ============ 游戏界面 ============ -->
+  <div id="gameUI">
+    <div id="statBar" class="pxbox">
+      <div id="hud"></div>
+      <div id="goalBar">
+        <div class="txt"><span id="goalTxt">首期目标 ¥40,000</span><span id="goalPct">0%</span></div>
+        <div class="bar"><div class="fill" id="goalFill"></div></div>
+      </div>
+      <button class="pxbtn blue sm" data-act="loan" id="btnLoan">🏦<span class="badge" id="bdgLoan"></span></button>
+      <button class="pxbtn sm" style="background:#8a5a34" data-act="decor" id="btnDecor">🎨</button>
+    </div>
+    <div id="stageWrap">
+      <canvas id="scene" width="240" height="240"></canvas>
+      <div id="toasts"></div>
+      <div id="banner"><div class="inner"><div class="t1" id="bnT1"></div><div class="t2" id="bnT2"></div></div></div>
+      <div id="panelLayer"><div id="panel" class="pxbox"></div></div>
+      <div id="decorBar">
+        <button class="pxbtn sm green" id="btnDecorDone">✔ 完成布置</button>
+        <button class="pxbtn sm gray" id="btnDecorPanel">📋 布置面板</button>
+      </div>
+    </div>
+    <div id="actionbar">
+      <button class="pxbtn blue" data-act="ad">📣 投流</button>
+      <button class="pxbtn green" data-act="ship">📦 发货<span class="badge" id="bdgShip"></span></button>
+      <button class="pxbtn" data-act="ticket">🛠 售后<span class="badge" id="bdgTicket"></span></button>
+      <button class="pxbtn" data-act="shop" style="background:var(--gold);color:var(--ink)">🆕 新品</button>
+      <button class="pxbtn" data-act="items" style="background:#7a5230;color:#fff">🛒 道具<span class="badge" id="bdgItems"></span></button>
+      <button class="pxbtn" data-act="live" style="background:#c2487e">🔴 直播</button>
+      <button class="pxbtn blue" data-act="staff">👥 员工</button>
+      <button class="pxbtn" data-act="office" style="background:#8a6a4a">🏠 升级<span class="badge" id="bdgOffice"></span></button>
+      <button class="pxbtn gray sm" data-act="scene" id="btnScene">🎬 直播间</button>
+      <div class="spdgrp">
+      <button class="pxbtn gray sm" data-act="mute" id="btnMute">🔊</button>
+        <button class="pxbtn gray sm" data-spd="0">⏸</button>
+        <button class="pxbtn gray sm act" data-spd="1">▶</button>
+        <button class="pxbtn gray sm" data-spd="2">▶▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 结算屏 ============ -->
+  <div id="endScreen" class="screen hidden">
+    <div class="rank" id="endRank">S</div>
+    <div class="logo" style="font-size:30px" id="endTitle">电商传奇达成！</div>
+    <div class="stats" id="endStats"></div>
+    <div class="diarybox" id="endDiary"></div>
+    <button class="pxbtn" id="btnRestart">🔁 再来一局</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* =====================================================================
+ * 《爆单物语》单文件 Demo
+ * 模块分区：CONFIG / UTIL / ART / SIM / RENDER / UI / INPUT / MAIN
+ * 铁律：SIM 纯逻辑可序列化；RENDER 只读 SIM 状态；素材键名即 API
+ * ===================================================================== */
+
+/* ============================ CONFIG ============================ */
+const CFG = {
+  GOAL_DAY: Infinity, TARGET_REVENUE: 40000, BANKRUPT: -1500,   // 自由经营：无期限，靠目标链与破产判定收尾
+  DAY_MS: location.search.includes("fast") ? 250 : 3200,   // 1 游戏天 = 3.2 秒（?fast 调试用 0.25 秒），节奏放慢适合抽空玩
+  BASE_EXPOSURE: 22, FAN_EXPO: 0.12, REP_EXPO: 16,
+  FEE: 0.95, FULFILL: 4,            // 回款=售价*95%-4
+  HEAT_DECAY: 0.985, PEND_SOFT: 18, PEND_HARD: 32,
+  TICKET_DAYS: 4, EVENT_CHANCE: 0.08, DECK_CD: 6,   // 事件频率下调 20%（0.10→0.08）
+  /* 每日幸运签：15%/天随机触发，效果当日生效 */
+  LUCK:{CHANCE:0.15,POOL:[
+    {t:"☀️ 曝光吉签",d:"平台流量倾斜，今日曝光 +15%",expo:1.15},
+    {t:"🐟 锦鲤签",d:"今日大客户光顾概率翻倍！",vip:2},
+    {t:"🧧 红包签",d:"老顾客集体打赏，进账 ¥150",cash:150},
+    {t:"⭐ 口碑签",d:"今日客人格外满意，口碑 +0.1",rep:0.1},
+    {t:"☁️ 平签",d:"今日风平浪静，安稳经营也是一种运气"}]},
+  /* 道具商店：后期金币的出口、爆单救火与策略筹码 */
+  ITEMS:{
+    rocket:{name:"🚀 火箭投流包",cost:2500,desc:"未来 3 天曝光 ×2.2，远超普通投流",dur:3},
+    giftbox:{name:"🎁 感恩回馈礼盒",cost:1800,desc:"立即口碑 +0.5、粉丝 +300"},
+    machine:{name:"🔧 全自动打包机",cost:6000,desc:"永久打包产能 +8/天（限购 1 台）",once:1},
+    cloud:{name:"📦 云仓应急托管",cost:1500,desc:"立即清空全部待发货并全额回款"},
+    insure:{name:"🎫 高级售后保险",cost:1200,desc:"未来 5 天售后工单自动承保，口碑无损",dur:5},
+    secret:{name:"🧪 爆款秘籍",cost:3000,desc:"指定一款在售商品热度直接拉满 100"},
+  },
+  SELF_SHIP: 6, WORKER_SHIP: 5, WORKER_PAY: 60, WORKER_MAX: 3,
+  SAAS_SHIP: 20, SAAS_PAY: 180,
+  OFFICE:[null,                                        // 办公室等级（跟随资金储备升级）
+    {name:"车库创业间", cost:0,     need:0,     pack:0, expo:0},
+    {name:"小型工作室", cost:5000,  need:8000,  pack:2, expo:3},
+    {name:"正规办公室", cost:15000, need:20000, pack:4, expo:8}],
+  AD: [null,
+    {name:"小额投流", cost:260,  mult:1.6, days:3},
+    {name:"大额投流", cost:800,  mult:2.2, days:3}],
+  /* 品类研发梯队：按累计营业额/称号逐步解锁，防止开局直奔高价品躺赢 */
+  CATS: [
+    {name:"复古手机壳", cost:8,  price:29, heat:30, dev:180,  color:"#d94f45"},
+    {name:"网红零食",   cost:6,  price:25, heat:40, dev:350,  color:"#f2a24b",
+      cond:s=>s.totalRevenue>=800||s.level>=1, hint:"累计营业额 ¥800 或升到「铜牌小店」"},
+    {name:"家居小物",   cost:15, price:55, heat:25, dev:680,  color:"#5ba14e",
+      cond:s=>s.totalRevenue>=4000||s.level>=2, hint:"累计营业额 ¥4,000 或升到「银牌商家」"},
+    {name:"数码配件",   cost:30, price:99, heat:35, dev:1600, color:"#3f7fc1",
+      cond:s=>s.totalRevenue>=12000||s.level>=3, hint:"累计营业额 ¥12,000 或升到「金牌卖家」"},
+  ],
+  /* 隐藏品类：达成条件后在研发面板解锁，高研发投入、高客单价，后期资金出口 */
+  HIDDEN:[
+    {name:"国潮联名款", cost:25, price:139, heat:45, dev:1800, color:"#c2543e",
+      cond:s=>s.rep>=4.5, hint:"口碑达到 4.5★，才有大牌愿意跟你联名"},
+    {name:"元宇宙盲盒", cost:18, price:169, heat:62, dev:2600, color:"#9a5fc9",
+      cond:s=>Object.keys(s.achv||{}).length>=4, hint:"解锁 4 项成就，混进潮玩圈拿渠道"},
+    {name:"AI 智能硬件", cost:50, price:219, heat:35, dev:3200, color:"#2e7d6e",
+      cond:s=>s.level>=5, hint:"称号达到「行业新贵」，AI 供应链才肯接你的单"},
+  ],
+  /* 摆设物件：可自由布置办公室场景；ad:true 的事先看"广告"（占位模拟）解锁 */
+  DECOR:{
+    /* —— 基础款（金币购买）—— */
+    potted:{name:"🪴 绿植盆栽",  cost:300,  desc:"纯纯的氛围担当，放哪儿都好看"},
+    shelf2:{name:"📚 整理架",    cost:800,  buff:{pack:1},    desc:"打包产能 +1 单/天"},
+    /* —— 广告解锁款 —— */
+    mic:   {name:"🎤 直播麦克风",cost:0, ad:true, buff:{expo:3},    desc:"曝光 +3/天"},
+    coffee:{name:"☕ 咖啡机",    cost:0, ad:true, rest:3,           desc:"全员每天疲劳额外恢复 +3"},
+    light: {name:"💡 补光灯",    cost:0, ad:true, buff:{expo:5},    desc:"曝光 +5/天"},
+    boxart:{name:"📦 快递艺术塔",cost:0, ad:true, buff:{pack:1},    desc:"打包产能 +1 单/天"},
+    frame: {name:"🖼 粉丝相框墙",cost:0, ad:true, buff:{fan:.05},   desc:"涨粉速度 +5%"},
+    ac:    {name:"❄️ 节能空调",  cost:0, ad:true, buff:{cost:.03},  desc:"每日成本 -3%"},
+    blindbox:{name:"🧸 盲盒展示柜",cost:0, ad:true, buff:{fan:.02}, desc:"涨粉速度 +2%"},
+    aquarium:{name:"🐠 鱼缸",    cost:0, ad:true, rest:2,           desc:"全员每天疲劳额外恢复 +2"},
+    catbed:{name:"🐱 猫窝",      cost:0, ad:true, rest:3,           desc:"全员疲劳恢复 +3，摸鱼神器"},
+    crane: {name:"🕹 娃娃机",     cost:0, ad:true, buff:{fan:.03},   desc:"涨粉速度 +3%"},
+  },
+  LEVELS: [[0,"新手店主"],[400,"铜牌小店",{expo:.05}],[1500,"银牌商家",{expo:.05,pack:2}],
+    [4000,"金牌卖家",{expo:.1,pack:3,cost:.05}],[9000,"品牌旗舰",{expo:.1,pack:4,cost:.08}],
+    [20000,"行业新贵",{expo:.15,pack:5,cost:.1}],[45000,"电商之星",{expo:.2,pack:6,cost:.12,fan:.1}],
+    [100000,"传奇卖场",{expo:.3,pack:8,cost:.15,fan:.2,vip:1.5}]],   // 第三列：等级被动 buff
+  MAX_PRODUCTS: 4, RESTOCK_QTY: 50,
+  LIVE: { UNLOCK_FANS: 200, DAYS: 3, COST: 400, PER_DAY: 120, EXPO: 70, HEAT: 6, CONV: 0.025, COOLDOWN: 3 },
+  STYLES: {
+    hawking:{name:"叫卖式",icon:"📢",desc:"转化 +1.5%、涨粉 ×1.3，但更容易口误翻车",conv:0.015, fanMult:1.3, misfire:0.55, cost:0,  expo:0,  rep:0},
+    seeding:{name:"种草式",icon:"🌱",desc:"每天口碑 +0.1，转化 +0.5%",                       conv:0.005, fanMult:1,   misfire:0.67, cost:0,  expo:0,  rep:0.1},
+    lottery:{name:"抽奖式",icon:"🎁",desc:"曝光 +30/天，每天额外支出 ¥80",                   conv:0,     fanMult:1.1, misfire:0.67, cost:80, expo:30, rep:0},
+  },
+  STAFF_MAX: 99, TRAIN_COST: 150, TRAIN_EXP: 30, LEVEL_EXP: 50,   // 编制不设上限（打包/客服/运营可无限招），主播/仓管/美工各限 1 名
+  FATIGUE: { DAILY:9, ANCHOR_LIVE:14, TRAIN:6, SOFT:60, HARD:85, REST:45 },
+  WAREHOUSE: { TRIGGER:30, SAFETY:200 },
+  STAFF_ROLES: {
+    packer:  {name:"打包员", hire:300, wage:80,  color:"#5ba14e", desc:"打包产能 +4 单/天，每级再 +2"},
+    service: {name:"客服",   hire:400, wage:90,  color:"#3f7fc1", desc:"每天自动补发处理售后，Lv3 起每天 2 张"},
+    operator:{name:"运营",   hire:350, wage:70,  color:"#e88f3c", desc:"曝光 +8/天，每级再 +5"},
+    anchor:  {name:"主播",   hire:600, wage:120, color:"#d96aa0", desc:"直播中曝光 +25/天，每级再 +10（限 1 名）"},
+    warehouse:{name:"仓管员", hire:350, wage:85, color:"#8a6fb8", desc:"库存低于 30 自动补货（留 ¥200 安全金），Lv3 起补货 8 折（限 1 名）"},
+    designer:{name:"美工",   hire:450, wage:95, color:"#c95d8f", desc:"上架前制作素材：1~2 天交稿（无美工要 3 天），素材质量决定首发热度加成（限 1 名）"},
+  },
+  STAFF_NAMES: ["小王","小李","阿珍","大明","阿豪","小美","老张","阿强","小林","豆豆","果果","铁蛋"],
+  /* 供应链开发决策：研发新品时的三步配置，深度影响上架后表现 */
+  DEV_OPTS:{
+    supp:[   // 供应商：影响进货成本（补货价）、转化、售后率
+      {k:"oem",   name:"白牌代工", costMult:1.0, conv:0,     qcMult:1.2, desc:"成本正常，品质一般（售后率 +20%）"},
+      {k:"fine",  name:"精品代工", costMult:1.4, conv:0.005, qcMult:1.0, desc:"补货成本 +40%，店铺转化 +0.5%"},
+      {k:"origin",name:"原厂定制", costMult:1.9, conv:0.01,  qcMult:0.8, desc:"补货成本 +90%，转化 +1%，售后率 -20%"}],
+    qc:[     // 品控：影响研发费与售后率
+      {k:"spot",name:"出厂抽检", costMult:1.0, qcFactor:1.0, desc:"不加钱，售后率照常"},
+      {k:"full",name:"全检入库", costMult:1.3, qcFactor:0.5, desc:"研发费 +30%，售后率 -50%"}],
+    pre:[    // 上市预热：影响首发声势
+      {k:"none", name:"直接上架", cost:0,   desc:"省钱，正常上架"},
+      {k:"water",name:"蓄水预热", cost:150, desc:"上架后新鲜期 5 天（直播选品曝光加成更久）"},
+      {k:"seed", name:"达人种草", cost:400, desc:"上架自带热度 +25，开局就有人问"}],
+  },
+  /* 进阶目标链：40k 首期目标达成后进入长线经营，每阶段送永久徽章加成 */
+  GOALS:[
+    {rev:40000,   name:"首期目标"},
+    {rev:100000,  name:"进阶目标 I",  buff:{expo:.05,pack:2}},
+    {rev:200000,  name:"进阶目标 II", buff:{expo:.05,cost:.04}},
+    {rev:350000,  name:"进阶目标 III",buff:{fan:.1,pack:3}},
+    {rev:600000,  name:"进阶目标 IV", buff:{expo:.1,cost:.06,vip:1.5}},
+    {rev:1000000, name:"百万传奇",   buff:{expo:.15,pack:5,fan:.15}},
+  ],
+  /* 银行贷款：救急资金池，每日利滚利，额度随称号提升 */
+  LOAN:{LIMIT:10000,LEVEL_ADD:2500,RATE:0.015,STEP:3000},
+  /* 产业投资：后期大额资金出口，一次性建成 + 日维护费，永久加成 */
+  FACIL:{
+    cloudhub:{name:"🏬 云仓分部",    cost:30000, upkeep:120, pack:12, desc:"打包产能 +12 单/天"},
+    shipnet: {name:"🚛 自建物流网",  cost:50000, upkeep:200, fee:.98, desc:"回款费率 95%→98%"},
+    mcn:     {name:"📺 MCN 直播基地",cost:40000, upkeep:180, liveExpo:40, desc:"直播冷却 -2 天，直播曝光 +40/天"},
+    aisvc:   {name:"🤖 智能客服系统",cost:25000, upkeep:100, desc:"每天自动处理 +2 张售后"},
+    brand:   {name:"🏛 品牌体验馆",  cost:60000, upkeep:220, desc:"转化率 +1.5%，每天自然涨粉 +10"},
+  },
+  /* 成就：一次性解锁，部分送小额永久徽章（收集驱动长线动力） */
+  ACHV:[
+    {id:"day10",   name:"开门红",      desc:"单日成交 ≥10 单",         cond:s=>(s.flags.maxDayOrders||0)>=10, buff:{expo:.02}},
+    {id:"rep48",   name:"口碑之王",    desc:"口碑达到 4.8★",           cond:s=>s.rep>=4.8},
+    {id:"fans2k",  name:"两千粉俱乐部", desc:"粉丝达到 2,000",          cond:s=>s.fans>=2000, buff:{fan:.05}},
+    {id:"hot100",  name:"爆品制造机",  desc:"任意商品热度达到 100",     cond:s=>s.products.some(p=>p.heat>=100), buff:{expo:.03}},
+    {id:"ship40",  name:"发货如飞",    desc:"打包产能 ≥40 单/天",      cond:()=>shipCapacity()>=40},
+    {id:"rich50k", name:"小康老板",    desc:"资金储备 ≥¥50,000",       cond:s=>s.money>=50000},
+    {id:"team4",   name:"五星团队",    desc:"4 名正式员工且全员 Lv3+", cond:s=>s.staff.length>=4&&s.staff.every(x=>x.level>=3)},
+    {id:"fac3",    name:"产业大亨",    desc:"建成 3 座产业设施",       cond:s=>Object.keys(s.fac).length>=3, buff:{expo:.05}},
+    {id:"rev500k", name:"五十万俱乐部", desc:"累计营业额 ≥¥500,000",   cond:s=>s.totalRevenue>=500000, buff:{expo:.05}},
+    {id:"bigday50",name:"爆单传说",    desc:"单日成交 ≥50 单",         cond:s=>(s.flags.maxDayOrders||0)>=50, buff:{fan:.08}},
+  ],
+};
+const TICKET_TYPES = ["商品质量问题","物流太慢被催","尺码/规格不符"];
+
+/* ============================ UTIL ============================ */
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const $=s=>document.querySelector(s);
+function rngf(){return Math.random()}       // Demo 用 Math.random；正式版可换种子随机
+function rng(a,b){return a+rngf()*(b-a)}
+function fmtY(n){return "¥"+Math.round(n).toLocaleString("zh-CN")}
+
+/* ============================ AUD ============================ */
+/* 8-bit 芯片音效：Web Audio 代码合成，零素材依赖；首次交互解锁 AudioContext */
+const AUD={
+  ctx:null, mute:localStorage.getItem("boomStory.mute")==="1",
+  init(){ if(!this.ctx){try{this.ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}
+    if(this.ctx&&this.ctx.state==="suspended")this.ctx.resume(); },
+  tone(f0,f1,dur,type,vol,when){ if(!this.ctx||this.mute)return;
+    const t=this.ctx.currentTime+(when||0);
+    const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+    o.type=type||"square"; o.frequency.setValueAtTime(f0,t);
+    if(f1&&f1!==f0)o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t+dur);
+    g.gain.setValueAtTime(vol||0.07,t); g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t+dur+0.02); },
+  play(n){ if(this.mute)return; this.init(); if(!this.ctx)return;
+    if(n==="coin")this.tone(880,1320,0.09,"square",0.05);
+    else if(n==="good")[523,659,784].forEach((f,i)=>this.tone(f,f,0.08,"square",0.06,i*0.07));
+    else if(n==="bad")this.tone(220,110,0.28,"sawtooth",0.06);
+    else if(n==="info")this.tone(440,440,0.06,"triangle",0.05);
+    else if(n==="banner")[523,659,784,1046].forEach((f,i)=>this.tone(f,f,0.13,"square",0.06,i*0.1));
+    else if(n==="click")this.tone(1100,900,0.035,"square",0.035);
+    else if(n==="pop")this.tone(700,1050,0.06,"triangle",0.05);
+    else if(n==="doorbell")[784,988].forEach((f,i)=>this.tone(f,f,0.12,"triangle",0.06,i*0.13)); },
+  toggle(){ this.mute=!this.mute; localStorage.setItem("boomStory.mute",this.mute?"1":"0");
+    if(!this.mute)this.play("pop"); return this.mute }
+};
+document.addEventListener("pointerdown",()=>AUD.init());
+/* 经营日记：一句话记录小店的关键瞬间（d 可传显式天数） */
+function diary(t,d){ if(S)S.diary.push({d:Math.min(d||S.day,CFG.GOAL_DAY),t}) }
+
+/* 3x5 像素数字字体（漂浮金额用） */
+const FONT3={
+ "0":["###","#.#","#.#","#.#","###"],"1":[".#.","##.",".#.",".#.","###"],
+ "2":["###","..#","###","#..","###"],"3":["###","..#","###","..#","###"],
+ "4":["#.#","#.#","###","..#","..#"],"5":["###","#..","###","..#","###"],
+ "6":["###","#..","###","#.#","###"],"7":["###","..#","..#","..#","..#"],
+ "8":["###","#.#","###","#.#","###"],"9":["###","#.#","###","..#","###"],
+ "+":["...",".#.","###",".#.","..."],"-":["...","...","###","...","..."],
+ "¥":["#.#","#.#","###",".#.","###"],"!":[".#.",".#.",".#.","...",".#."],
+ "L":["#..","#..","#..","#..","###"],"I":["###",".#.",".#.",".#.","###"],
+ "V":["#.#","#.#","#.#",".#.",".#."],"E":["###","#..","###","#..","###"],
+};
+
+/* ============================ ART ============================ */
+/* 素材唯一入口：调色板 + 像素矩阵 → 烘焙离屏精灵。换 PNG 图集只改本层。 */
+const PAL={k:"#2b2330",w:"#ffffff",s:"#f2c297",h:"#7a4526",r:"#d94f45",o:"#e88f3c",
+  y:"#f2d24b",g:"#5ba14e",b:"#3f7fc1",p:"#8a5a34",q:"#b07e4a",m:"#f4e3bc",d:"#4a3b52",t:"#bfe3f2"};
+
+const MAPS={
+/* ---- 主角（16x16，两帧行走） ---- */
+hero_down_0:[
+"................",".....kkkkkk.....","....khhhhhhk....","....hhhhhhhh....",
+"....hssssssh....","....skssssks....","....ssssssss....",".....ssssss.....",
+"....krrrrrrk....","...skrrrrrrks...","...skrrrrrrks...","....krrrrrrk....",
+".....kkkkkk.....",".....dd..dd.....",".....dd..dd.....",".....kk..kk....."],
+hero_down_1:[
+"................",".....kkkkkk.....","....khhhhhhk....","....hhhhhhhh....",
+"....hssssssh....","....skssssks....","....ssssssss....",".....ssssss.....",
+"....krrrrrrk....","...skrrrrrrks...","...skrrrrrrks...","....krrrrrrk....",
+".....kkkkkk.....","....dd....dd....","....dd....dd....","....kk....kk...."],
+hero_up_0:[
+"................",".....kkkkkk.....","....khhhhhhk....","....hhhhhhhh....",
+"....hhhhhhhh....","....hhhhhhhh....","....shhhhhhs....",".....ssssss.....",
+"....krrrrrrk....","...skrrrrrrks...","...skrrrrrrks...","....krrrrrrk....",
+".....kkkkkk.....",".....dd..dd.....",".....dd..dd.....",".....kk..kk....."],
+hero_up_1:[
+"................",".....kkkkkk.....","....khhhhhhk....","....hhhhhhhh....",
+"....hhhhhhhh....","....hhhhhhhh....","....shhhhhhs....",".....ssssss.....",
+"....krrrrrrk....","...skrrrrrrks...","...skrrrrrrks...","....krrrrrrk....",
+".....kkkkkk.....","....dd....dd....","....dd....dd....","....kk....kk...."],
+hero_side_0:[
+"................",".....kkkkkk.....","....khhhhhhk....","....hhhhhhhh....",
+"....hhssssss....","....hhssskss....","....hhssssss....",".....ssssss.....",
+"....krrrrrrk....","....krrrrrrsk...","....krrrrrrsk...","....krrrrrrk....",
+".....kkkkkk.....","......dddd......","......dddd......","......kkkk......"],
+hero_side_1:[
+"................",".....kkkkkk.....","....khhhhhhk....","....hhhhhhhh....",
+"....hhssssss....","....hhssskss....","....hhssssss....",".....ssssss.....",
+"....krrrrrrk....","....krrrrrrsk...","....krrrrrrsk...","....krrrrrrk....",
+".....kkkkkk.....","....dd....dd....","....dd....dd....","....kk....kk...."],
+/* 坐姿（敲键盘，桌子遮挡下半身） */
+hero_sit_0:[
+"................","................",".....kkkkkk.....","....khhhhhhk....",
+"....hssssssh....","....skssssks....","....ssssssss....",".....ssssss.....",
+"....krrrrrrk....","...skrrrrrrks...","....krrrrrrk....","................",
+"................","................","................","................"],
+hero_sit_1:[
+"................","................",".....kkkkkk.....","....khhhhhhk....",
+"....hssssssh....","....skssssks....","....ssssssss....",".....ssssss.....",
+"...skrrrrrrks...","....krrrrrrk....","....krrrrrrk....","................",
+"................","................","................","................"],
+/* ---- 快递员（蓝制服+帽子） ---- */
+cour_down_0:[
+"................",".....kkkkkk.....","....kbbbbbbk....","....kbbbbbbk....",
+"....bbbbbbbb....","....skssssks....","....ssssssss....",".....ssssss.....",
+"....kbbbbbbk....","...skbbbbbbks...","...skbbbbbbks...","....kbbbbbbk....",
+".....kkkkkk.....",".....dd..dd.....",".....dd..dd.....",".....kk..kk....."],
+cour_down_1:[
+"................",".....kkkkkk.....","....kbbbbbbk....","....kbbbbbbk....",
+"....bbbbbbbb....","....skssssks....","....ssssssss....",".....ssssss.....",
+"....kbbbbbbk....","...skbbbbbbks...","...skbbbbbbks...","....kbbbbbbk....",
+".....kkkkkk.....","....dd....dd....","....dd....dd....","....kk....kk...."],
+cour_up_0:[
+"................",".....kkkkkk.....","....kbbbbbbk....","....kbbbbbbk....",
+"....kbbbbbbk....","....bbbbbbbb....","....bbbbbbbb....",".....kkkkkk.....",
+"....kbbbbbbk....","...skbbbbbbks...","...skbbbbbbks...","....kbbbbbbk....",
+".....kkkkkk.....",".....dd..dd.....",".....dd..dd.....",".....kk..kk....."],
+cour_up_1:[
+"................",".....kkkkkk.....","....kbbbbbbk....","....kbbbbbbk....",
+"....kbbbbbbk....","....bbbbbbbb....","....bbbbbbbb....",".....kkkkkk.....",
+"....kbbbbbbk....","...skbbbbbbks...","...skbbbbbbks...","....kbbbbbbk....",
+".....kkkkkk.....","....dd....dd....","....dd....dd....","....kk....kk...."],
+/* ---- 图标 ---- */
+ic_heart:[".rr..rr.","rrrrrrrr","rwrrrrrr","rrrrrrrr",".rrrrrr.","..rrrr..","...rr...","........"],
+ic_bolt:["...yy...","..yyy...",".yyyy...","..yyyyy.","....yyy.","..yyyy..","..yy....","........"],
+ic_alert:["..kkkk..",".krrrrk.","krrwwrrk","krrwwrrk","krrwwrrk","krrrrrrk","krrwwrrk",".kkkkkk."],
+ic_box:[".kkkkkk.","kyyyyyyk","kyywwyyk","kyywwyyk","kyyyyyyk","kyywwyyk","kyyyyyyk",".kkkkkk."],
+/* 成就徽章：红绶带 + 金牌面（o 高光 / k 星核） */
+ic_medal:[".rr..rr.","rrr..rrr",".yyyyyy.","yyoyyoyy",".yyyyyy.",".yykkyy.","..yyyy..","........"],
+/* 产业厂房：烟囱 + 锯齿屋顶 + 亮窗 */
+ic_fact:["kk......","kk......","kkk.k.k.","kkkkkkkk","kyyoyyok","kyyyyyyk","kyyyyyyk","kkkkkkkk"],
+};
+
+const SPR={};      // 键名 → 离屏canvas（素材 API）
+function bake(map,pal){
+  const c=document.createElement("canvas");c.width=map[0].length;c.height=map.length;
+  const g=c.getContext("2d");
+  const P=pal||PAL;
+  map.forEach((row,j)=>{for(let i=0;i<row.length;i++){const col=P[row[i]];
+    if(col){g.fillStyle=col;g.fillRect(i,j,1,1);}}});
+  return c;
+}
+function bakeAll(){for(const k in MAPS)SPR[k]=bake(MAPS[k]);}
+function spr(k){return SPR[k]}
+
+/* ============================ SIM ============================ */
+/* 纯逻辑模拟器：不碰 DOM/Canvas，state 可序列化 */
+let S=null;                                  // 模拟状态
+function newGame(){
+  S={
+    day:1, money:3500, rep:3.0, fans:30, level:0,
+    totalRevenue:0, totalOrders:0, monthRevenue:0, monthOrders:0,
+    products:[{id:1,name:"复古手机壳",color:"#d94f45",cost:8,price:29,heat:30,stock:40,devLeft:0,fresh:0}],
+    nextId:2, pending:[],                 // 待发货订单价格队列(FIFO)
+    tickets:[], tid:1,
+    adLevel:0, adDays:0, workers:0, saas:false,
+    promoDays:0, hikeDays:0,
+    live:{active:false,daysLeft:0,pid:null,cool:0,style:null,fit:null,riskHit:false},   // 直播状态（含选品适配与风格）
+    staff:[], staffNextId:1,                          // 正式员工（养成系统，含疲劳值）
+    officeLevel:1,                                    // 办公室等级（资金储备升级）
+    deckCd:0,                                         // 事件卡冷却（天）
+    items:{},                                         // 道具背包 {key:数量}
+    decor:{owned:{potted:1}, placed:[]},              // 摆设物件 {已拥有:{id:数量}, 已放置:[{id,x,y}]}
+    fac:{},                                           // 已建成产业设施 {key:解锁日}
+    achv:{},                                          // 已解锁成就 {key:解锁日}
+    goalIdx:0,                                        // 进阶目标链当前阶段
+    debt:0,                                           // 银行欠款本金（每日利滚利）
+    itemFx:{rocketDays:0,insureDays:0},               // 持续型道具剩余天数
+    adFx:{adBoost:0,revBoost:0},                      // 激励视频增益剩余天数（投流×2 / 每单收益×1.5）
+    shippedSincePickup:0,
+    flags:{firstSale:false,fan1000:false,bigDay:false,firstLive:false,liveUnlock:false,msRev:0,maxDayOrders:0,debtWarn:false,hiddenSeen:{},be:{},beBet:null,acquired:false},
+    diary:[{d:1,t:"在车库里用 ¥3,500 启动了小店"}],   // 经营日记（结算页回看）
+    fx:[],                                // → 渲染层消费（不入存档语义）
+  };
+  if(location.search.includes("debug")){S.fans=500;S.money=8000;}   // 调试开局
+}
+function levelName(fans){let n=CFG.LEVELS[0][1];for(const[t,n2]of CFG.LEVELS)if(fans>=t)n=n2;return n}
+function levelIdx(fans){let i=0;CFG.LEVELS.forEach((l,ix)=>{if(fans>=l[0])i=ix});return i}
+function lvlBuff(){   // 称号 + 已达成进阶目标 + 成就 + 场景摆设 的徽章被动叠加
+  const o={};const add=b=>{if(!b)return;for(const k in b)o[k]=(o[k]||0)+b[k]};
+  add(CFG.LEVELS[S.level][2]);
+  CFG.GOALS.forEach((g,i)=>{if(i<S.goalIdx)add(g.buff)});   // 已达成的进阶目标徽章
+  for(const a of CFG.ACHV)if(S.achv&&S.achv[a.id]&&a.buff)add(a.buff);   // 已解锁成就徽章
+  (S.decor&&S.decor.placed||[]).forEach(d=>{const c=CFG.DECOR[d.id];if(c)add(c.buff)});   // 摆设加成
+  return o}
+function decorRest(){   // 摆设带来的全员每日疲劳额外恢复（咖啡机/猫窝）
+  let r=0;(S.decor&&S.decor.placed||[]).forEach(d=>{const c=CFG.DECOR[d.id];if(c&&c.rest)r+=c.rest});
+  return r}
+function buffDesc(b){if(!b)return"";
+  const d=[];if(b.expo)d.push(`曝光 +${Math.round(b.expo*100)}%`);if(b.pack)d.push(`产能 +${b.pack}`);
+  if(b.cost)d.push(`成本 -${Math.round(b.cost*100)}%`);if(b.fan)d.push(`涨粉 +${Math.round(b.fan*100)}%`);
+  if(b.vip)d.push("大客户 ×1.5");return d.join("／")}
+function shipCapacity(){return CFG.SELF_SHIP + S.workers*CFG.WORKER_SHIP + (S.saas?CFG.SAAS_SHIP:0) + staffPackBonus() + officePackBonus() + (S.fac&&S.fac.cloudhub?CFG.FACIL.cloudhub.pack:0) + (S.flags.machine?8:0) + (lvlBuff().pack||0)}
+function shipFee(){return S.fac&&S.fac.shipnet?CFG.FACIL.shipnet.fee:CFG.FEE}   // 自建物流：回款费率提升
+/* ---- 银行贷款：救急资金池，每日 1.5% 利滚利，额度随称号提升 ---- */
+function loanLimit(){return CFG.LOAN.LIMIT+S.level*CFG.LOAN.LEVEL_ADD}
+function borrowMoney(amt){
+  if(S.debt+amt>loanLimit())return{ok:false,msg:"超出贷款额度（当前上限 "+fmtY(loanLimit())+"）"};
+  S.debt+=amt;S.money+=amt;
+  diary(`向银行借款 ${fmtY(amt)}，当前欠款 ${fmtY(S.debt)}`);
+  return{ok:true,msg:"🏦 贷款到账 "+fmtY(amt)+"！每天 1.5% 利滚利，尽快还清"}}
+function repayMoney(amt){
+  amt=Math.min(amt,S.debt);
+  if(amt<=0)return{ok:false,msg:"没有欠款，无债一身轻"};
+  if(S.money<amt)return{ok:false,msg:"资金不足，还不上的"};
+  S.money-=amt;S.debt-=amt;S.flags.debtWarn=false;
+  diary(`归还银行贷款 ${fmtY(amt)}，剩余欠款 ${fmtY(S.debt)}`);
+  return{ok:true,msg:S.debt>0?"还款 "+fmtY(amt)+"，剩余欠款 "+fmtY(S.debt):"🏦 贷款还清，无债一身轻！"}}
+/* 道具系统：购买入背包，主动使用 */
+function buyItem(k){const it=CFG.ITEMS[k];
+  if(!it||S.money<it.cost)return false;
+  if(it.once&&(S.items[k]>0||S.flags[k]))return false;
+  S.money-=it.cost;S.items[k]=(S.items[k]||0)+1;return true}
+function useItem(k,pid){const it=CFG.ITEMS[k];
+  if(!it||!(S.items[k]>0))return"背包里没有这个道具";
+  const done=(msg,tone)=>{S.items[k]--;UI.toast(msg,tone||"good");diary(msg);return null};
+  if(k==="rocket"){S.itemFx.rocketDays=it.dur;return done("🚀 火箭投流启动，未来 3 天曝光 ×2.2！")}
+  if(k==="giftbox"){S.rep=clamp(S.rep+0.5,1,5);S.fans+=300;return done("🎁 感恩回馈大获好评：口碑 +0.5、粉丝 +300！")}
+  if(k==="machine"){S.flags.machine=true;return done("🔧 全自动打包机上线，打包产能永久 +8！")}
+  if(k==="cloud"){const n=S.pending.length;let g=0;
+    S.pending.forEach(p=>g+=p*shipFee()-CFG.FULFILL);S.pending=[];
+    S.money+=g;S.totalRevenue+=g;S.monthRevenue+=g;
+    return done(`📦 云仓接管 ${n} 笔积压订单，全额回款 ${fmtY(Math.round(g))}！`)}
+  if(k==="insure"){S.itemFx.insureDays=it.dur;return done("🎫 售后保险生效，未来 5 天工单自动承保")}
+  if(k==="secret"){const p=S.products.find(q=>q.id===pid&&q.devLeft<=0);
+    if(!p)return"请先选择一款在售商品";
+    p.heat=100;return done(`🧪 「${p.name}」吃透爆款秘籍，热度拉满 100！`)}
+  return"未知道具"}
+function effHeat(){let h=0;S.products.forEach(p=>h=Math.max(h,p.heat));return h}
+function facUpkeep(){let u=0;for(const k in S.fac)u+=CFG.FACIL[k].upkeep;return u}
+function dailyCost(){return Math.round((S.workers*CFG.WORKER_PAY + (S.saas?CFG.SAAS_PAY:0) + staffWages() + facUpkeep() + (S.flags.rentUp?60:0))*(1-(lvlBuff().cost||0)))}
+
+/* ---- 四大决策 API ---- */
+function buyAd(lv){const a=CFG.AD[lv];if(!a||S.money<a.cost)return false;
+  S.money-=a.cost;S.adLevel=lv;S.adDays+=a.days;
+  UI.toast(`📣 已投放「${a.name}」${a.days} 天，曝光 ×${a.mult}！`,"good");return true}
+function changeWorkers(d){const n=S.workers+d;
+  if(n<0||n>CFG.WORKER_MAX)return false;S.workers=n;
+  UI.toast(d>0?`招了临时工（${S.workers}人）`:`临时工离职（${S.workers}人）`,"info");return true}
+function toggleSaas(){S.saas=!S.saas;
+  UI.toast(S.saas?"已开通云仓代发 +20 单/天":"已关闭云仓代发","info");return true}
+function resolveTicket(id,act){
+  const i=S.tickets.findIndex(t=>t.id===id);if(i<0)return false;
+  const t=S.tickets[i];S.tickets.splice(i,1);
+  if(act==="refund"){const p=-t.price;S.money+=p;S.rep=clamp(S.rep+0.15,1,5);S.fans=Math.max(0,S.fans-2);
+    UI.fx("cash",p);UI.toast("已全额退款，顾客很满意（口碑↑）","good");}
+  else if(act==="resend"){S.money-=t.cost+CFG.FULFILL;S.rep=clamp(S.rep+0.08,1,5);
+    UI.toast("已补发换货，顾客收货中（口碑小幅↑）","good");}
+  else{S.rep=clamp(S.rep-0.35,1,5);S.fans=Math.max(0,S.fans-5);
+    UI.toast("拒绝退款…顾客很生气（口碑↓↓）","bad");}
+  return true}
+function devProduct(ci,plan,hid){
+  const c=(hid?CFG.HIDDEN:CFG.CATS)[ci];if(!c)return false;
+  if(c.cond&&!c.cond(S)){UI.toast(`「${c.name}」还没解锁：${c.hint}`,"bad");return false}
+  plan=plan||{supp:0,qc:0,pre:0};
+  const D=CFG.DEV_OPTS;
+  const devCost=Math.ceil(devFee(c)*D.qc[plan.qc].costMult);   // 同款重复研发：市场内卷，费用递增
+  const preCost=D.pre[plan.pre].cost;
+  if(S.money<devCost+preCost)return false;
+  S.money-=devCost+preCost;
+  S.products.push({id:S.nextId++,name:c.name,color:c.color,
+    cost:Math.round(c.cost*D.supp[plan.supp].costMult),price:c.price,
+    heat:c.heat,stock:0,devLeft:3,fresh:0,supp:plan.supp,qc:plan.qc,pre:plan.pre});
+  UI.toast(`开始研发「${c.name}」（${D.supp[plan.supp].name}·${D.qc[plan.qc].name}·${D.pre[plan.pre].name}），3 天后上架`,"info");
+  diary(`立项研发「${c.name}」：${D.supp[plan.supp].name}+${D.qc[plan.qc].name}+${D.pre[plan.pre].name}`);
+  return true}
+/* 同品类重复研发费用：×(1+0.6×已有同款数)，遏制无脑刷同一款 */
+function devFee(c){return Math.ceil(c.dev*(1+0.6*S.products.filter(p=>p.name===c.name).length))}
+
+/* 供应链加成：供应商品质 → 店铺转化（取在售商品中最高档）；品控 → 平均售后率乘数 */
+function suppConvBonus(){
+  const ps=S.products.filter(p=>p.devLeft<=0&&!p.artLeft);
+  let b=0;ps.forEach(p=>{const d=CFG.DEV_OPTS.supp[p.supp||0];
+    if(d&&d.conv>b)b=d.conv});
+  return b}
+function avgQcMult(){
+  const ps=S.products.filter(p=>p.devLeft<=0&&!p.artLeft);if(!ps.length)return 1;
+  let m=0;ps.forEach(p=>{const d=CFG.DEV_OPTS.supp[p.supp||0],q=CFG.DEV_OPTS.qc[p.qc||0];
+    m+=(d?d.qcMult:1)*(q?q.qcFactor:1)});
+  return m/ps.length}
+function restock(pid){
+  const p=S.products.find(x=>x.id===pid);if(!p)return false;
+  const c=Math.ceil(p.cost*CFG.RESTOCK_QTY*(S.hikeDays>0?1.5:1));
+  if(S.money<c)return false;
+  S.money-=c;p.stock+=CFG.RESTOCK_QTY;
+  UI.toast(`「${p.name}」补货 +${CFG.RESTOCK_QTY} 件`,"good");return true}
+function delist(pid){
+  const i=S.products.findIndex(x=>x.id===pid);if(i<0)return false;
+  UI.toast(`已下架「${S.products[i].name}」`,"info");S.products.splice(i,1);return true}
+
+/* ---- 直播 & 员工 API ---- */
+function canLive(){return S.fans>=CFG.LIVE.UNLOCK_FANS&&!S.live.active&&S.live.cool<=0}
+/* 选品适配度：新鲜度/热度/库存共同决定直播效果 */
+function liveFit(p){
+  let conv=0,expoMult=1,risk=false,tag="普通选品",stars=2;
+  if(p.fresh>0){expoMult*=1.3;tag="新品首播 · 曝光 ×1.3";stars=3;}
+  if(p.heat>=45&&p.stock>=40){conv+=0.015;tag="完美选品 · 转化大增";stars=4;}
+  else if(p.heat>=30&&p.stock>=20){conv+=0.005;tag="优质选品";stars=3;}
+  else if(p.heat<18){conv-=0.01;tag="冷门选品 · 转化下降";stars=1;}
+  if(p.stock<15){risk=true;tag+=" ⚠缺货风险";stars=Math.min(stars,2);}
+  return {conv,expoMult,risk,tag,stars};
+}
+function startLive(pid,style){
+  const p=S.products.find(x=>x.id===pid);
+  if(!canLive()||S.money<CFG.LIVE.COST||!p||p.devLeft>0)return false;
+  style=CFG.STYLES[style]?style:"hawking";
+  S.money-=CFG.LIVE.COST;
+  S.live={active:true,daysLeft:CFG.LIVE.DAYS,pid,cool:0,style,fit:liveFit(p),riskHit:false};
+  UI.toast(`开播！主推「${p.name}」（${S.live.fit.tag}）· ${CFG.STYLES[style].name}`,"good");
+  if(!S.flags.firstLive){S.flags.firstLive=true;diary("直播间第一次亮灯，老板亲自上阵")}
+  SCENE.show("studio");                     // 切到直播间看弹幕（演出层协调）
+  $("#btnScene").textContent="🏢 办公室";
+  return true}
+function endLive(early){
+  S.live={active:false,daysLeft:0,pid:null,cool:early?1:Math.max(0,CFG.LIVE.COOLDOWN-(S.fac&&S.fac.mcn?2:0)),style:null,fit:null,riskHit:false};
+  UI.toast(early?"提前收播，设备冷却中…":"本场直播圆满结束！","info")}
+/* 疲劳效率：休息 0 / 疲劳≥85 打 4 折 / ≥60 打 7.5 折 */
+function staffEff(s){
+  if(s.resting)return 0;
+  if(s.fatigue>=CFG.FATIGUE.HARD)return 0.4;
+  if(s.fatigue>=CFG.FATIGUE.SOFT)return 0.75;
+  return 1}
+function staffEffect(s){
+  const lv=s.level,e=staffEff(s);
+  const pack=4+lv*2, svc=s.level>=3?2:1, op=8+lv*5, an=25+lv*10;
+  if(e===0)return"🛌 休息中，今日无产出";
+  const tag=s.fatigue>=CFG.FATIGUE.HARD?"（疲劳 ×0.4）":s.fatigue>=CFG.FATIGUE.SOFT?"（疲劳 ×0.75）":"";
+  if(s.role==="packer")return`打包 +${Math.round(pack*e)} 单/天${tag}`;
+  if(s.role==="service")return`每天自动处理 ${Math.round(svc*e)} 张售后${tag}`;
+  if(s.role==="operator")return`曝光 +${Math.round(op*e)}/天${tag}`;
+  if(s.role==="anchor")return`直播曝光 +${Math.round(an*e)}/天${tag}`;
+  return ""}
+function staffPackBonus(){let b=0;S.staff.forEach(s=>{if(s.role==="packer")b+=(2+s.level*2)*staffEff(s)});return Math.round(b)}
+/* ---- 办公室升级（跟随资金储备） ---- */
+function officePackBonus(){return CFG.OFFICE[S.officeLevel].pack||0}
+function officeExpoBonus(){return CFG.OFFICE[S.officeLevel].expo||0}
+function upgradeOffice(){
+  const nx=CFG.OFFICE[S.officeLevel+1];
+  if(!nx)return{ok:false,msg:"办公室已是最高级"};
+  if(S.money<nx.need)return{ok:false,msg:"资金储备需达 "+fmtY(nx.need)+"（当前 "+fmtY(Math.floor(S.money))+"）"};
+  S.money-=nx.cost;S.officeLevel++;
+  bakeOfficeSkin(S.officeLevel);
+  diary(`小店搬进了「${nx.name}」，场面越来越像样了`);
+  return{ok:true,msg:"🎉 办公室升级为「"+nx.name+"」！产能 +"+nx.pack+" 单/天"+(nx.expo?"、曝光 +"+nx.expo+"/天":"")};
+}
+function staffExpoBonus(){let b=0;S.staff.forEach(s=>{if(s.role==="operator")b+=(3+s.level*5)*staffEff(s)});return Math.round(b)}
+function staffAnchorBonus(){let b=0;S.staff.forEach(s=>{if(s.role==="anchor")b+=(15+s.level*10)*staffEff(s)});return Math.round(b)}
+function staffServiceCap(){let c=0;S.staff.forEach(s=>{if(s.role==="service")c+=Math.round((s.level>=3?2:1)*staffEff(s))});
+  return c+(S.fac&&S.fac.aisvc?2:0)}   // 智能客服产业：每天自动多处理 2 张售后
+function staffWages(){let b=0;S.staff.forEach(s=>b+=CFG.STAFF_ROLES[s.role].wage);
+  if(S.flags.wageUp&&S.day<=S.flags.wageUp)b*=1.5;   // 涨薪事件：30 天工资 ×1.5
+  return Math.round(b)}
+function hireStaff(role){
+  const r=CFG.STAFF_ROLES[role];
+  if(!r||S.staff.length>=CFG.STAFF_MAX||S.money<r.hire)return false;
+  if((role==="anchor"||role==="warehouse"||role==="designer")&&S.staff.some(s=>s.role===role))return false;
+  const used=S.staff.map(s=>s.name);
+  const name=CFG.STAFF_NAMES.find(n=>!used.includes(n))||("新员工"+S.staffNextId);
+  S.money-=r.hire;
+  S.staff.push({id:S.staffNextId++,name,role,level:1,exp:0,fatigue:0,resting:false});
+  UI.toast(`${r.name}「${name}」入职！（签约费 ${fmtY(r.hire)}）`,"good");
+  diary(`「${name}」加入小店，成为${r.name}`);
+  return true}
+function fireStaff(id){
+  const i=S.staff.findIndex(s=>s.id===id);if(i<0)return false;
+  UI.toast(`「${S.staff[i].name}」离开了团队`,"info");S.staff.splice(i,1);return true}
+function trainStaff(id){
+  const s=S.staff.find(x=>x.id===id);
+  if(!s||s.level>=5||S.money<CFG.TRAIN_COST)return false;
+  S.money-=CFG.TRAIN_COST;s.exp+=CFG.TRAIN_EXP;
+  s.fatigue=clamp(s.fatigue+CFG.FATIGUE.TRAIN,0,100);   // 培训也累人
+  checkLevel(s);return true}
+function restStaff(id){
+  const s=S.staff.find(x=>x.id===id);if(!s||s.resting)return false;
+  s.resting=true;s.fatigue=clamp(s.fatigue-CFG.FATIGUE.REST,0,100);
+  UI.toast(`🛌「${s.name}」今天休息，明天满血回归`,"info");return true}
+function checkLevel(s){
+  while(s.level<5&&s.exp>=s.level*CFG.LEVEL_EXP){
+    s.exp-=s.level*CFG.LEVEL_EXP;s.level++;
+    UI.banner("⭐ 员工成长",`${CFG.STAFF_ROLES[s.role].name}「${s.name}」升到 Lv${s.level}！`)}}
+
+/* ---- 每日结算流水线 ---- */
+function tickDay(){
+  if(S.day>CFG.GOAL_DAY)return;
+  const day=S.day;S.day++;
+  /* 0) 直播日效果与随机直播事件（含选品适配与开播风格加成） */
+  let liveMult=1,liveExpo=0,liveConv=0;
+  if(S.live.active){
+    const st=CFG.STYLES[S.live.style]||CFG.STYLES.hawking;
+    const fit=S.live.fit||{conv:0,expoMult:1,risk:false};
+    liveExpo=Math.round((CFG.LIVE.EXPO+staffAnchorBonus()+st.expo+(S.fac&&S.fac.mcn?CFG.FACIL.mcn.liveExpo:0))*fit.expoMult);
+    liveConv=CFG.LIVE.CONV+fit.conv+st.conv;
+    S.money-=CFG.LIVE.PER_DAY+st.cost;
+    if(st.rep)S.rep=clamp(S.rep+st.rep,1,5);
+    if(rngf()<0.3){const r=rngf();
+      if(r<0.34){liveMult=1.5;UI.toast("🔥 直播间弹幕爆炸，今日订单暴涨！","good")}
+      else if(r<st.misfire){const tip=100+Math.floor(rngf()*200);S.money+=tip;
+        UI.fx("cash",tip);UI.toast(`🎁 观众礼物打赏 +${fmtY(tip)}`,"good")}
+      else{S.rep=clamp(S.rep-0.1,1,5);UI.toast("😳 主播口误翻车，口碑小降","bad")}}
+  }
+  const luckExpo=(S.luck&&S.luck.day===S.day)?CFG.LUCK.POOL[S.luck.type].expo||1:1;
+  const luckVip=(S.luck&&S.luck.day===S.day)?CFG.LUCK.POOL[S.luck.type].vip||1:1;
+  /* 1) 曝光与订单（投流为乘算倍率，规模越大收益越明显） */
+  let expo=(CFG.BASE_EXPOSURE + S.fans*CFG.FAN_EXPO + (S.rep-3)*CFG.REP_EXPO + staffExpoBonus() + officeExpoBonus() + liveExpo);
+  expo*=(1+(lvlBuff().expo||0));   // 称号等级被动：曝光加成
+  if(S.flags.repGold)expo*=1.1;   // 金牌口碑店铺永久 buff
+  if(S.adDays>0)expo*=CFG.AD[S.adLevel].mult;
+  if(S.adFx.adBoost>0)expo*=2;   // 激励视频：明日投流曝光 ×2
+  if(S.promoDays>0)expo*=2;
+  expo*=luckExpo;   // 幸运签：曝光吉签
+  if(S.itemFx.rocketDays>0)expo*=2.2;   // 道具：火箭投流包
+  const conv=clamp(0.04 + effHeat()*0.005 + (S.rep-3)*0.03 + liveConv + suppConvBonus()
+    + (S.fac&&S.fac.brand?0.015:0)                                     // 品牌体验馆：转化 +1.5%
+    + (S.flags.giftLive&&S.day<=S.flags.giftLive?0.06:0), 0.02, 0.6);  // 头部达人直播带货：2 天转化加成
+  let orders=Math.round(expo*conv*rng(0.75,1.25));
+  orders=clamp(Math.round(clamp(orders,0,150)*liveMult),0,150);
+  orders=Math.max(orders,2);          // 自然客流兜底，防冷启动/口碑低谷零收入死锁
+  /* 2) 分单：按热度加权，高价品需求弹性差（贵的东西天然卖得慢）；缺货则丢单扣口碑 */
+  let lost=0;
+  const w=p=>Math.max(1,p.heat)*Math.pow(29/p.price,0.45);   // 需求权重 = 热度 × 价格弹性
+  for(let i=0;i<orders;i++){
+    const pool=S.products.filter(p=>p.devLeft<=0&&!p.artLeft&&p.stock>0);
+    if(!pool.length){lost++;continue}
+    const tot=pool.reduce((s,p)=>s+w(p),0);let r=rngf()*tot,pick=pool[0];
+    let acc=0;for(const p of pool){acc+=w(p);if(r<=acc){pick=p;break}}
+    pick.stock--;pick.sold=(pick.sold||0)+1;pick._st=(pick._st||0)+1;   // _st 记当日销量：驱动市场饱和退烧
+    S.pending.push(pick.price);
+  }
+  if(lost)S.rep=clamp(S.rep-Math.min(0.08,lost*0.015),1,5);
+  /* 直播选品缺货风险：当天丢单即触发一次性翻车惩罚 */
+  if(lost&&S.live.active&&S.live.fit&&S.live.fit.risk&&!S.live.riskHit){
+    S.live.riskHit=true;S.rep=clamp(S.rep-0.3,1,5);
+    UI.toast("⚠ 直播间缺货翻车！观众吐槽，口碑大降","bad")}
+  S.totalOrders+=orders-lost;S.monthOrders+=orders-lost;
+  S.flags.maxDayOrders=Math.max(S.flags.maxDayOrders||0,orders-lost);   // 成就统计：单日成交峰值
+  /* 3) 发货回款 */
+  const cap=shipCapacity();
+  const shipped=Math.min(S.pending.length,cap);
+  let gmv=0,vipHit=0;
+  const rb=S.adFx.revBoost>0?1.5:1;   // 激励视频：明日每单收益 ×1.5
+  for(let i=0;i<shipped;i++){let price=S.pending.shift();
+    if(shipped>=3&&!vipHit&&rngf()<0.08*luckVip*(lvlBuff().vip||1)){price*=10;vipHit=price;   // 大客户订单：一笔顶十单（锦鲤签/传奇卖场加成）
+      UI.fx("cash",price,"💼 大客户！")}
+    gmv+=price*rb;
+    S.money+=price*shipFee()*rb-CFG.FULFILL;}
+  if(vipHit){UI.toast(`💼 遇到大客户订单，一笔进账 ${fmtY(Math.round(vipHit*shipFee()-CFG.FULFILL))}！`,"good");
+    UI.fx("confetti",1);diary("一个大客户下单，金额顶平时十单",day)}
+  /* 探店博主：发货速度决定好评差评（剩余积压少=发得快） */
+  if(shipped>=2&&rngf()<0.06){const back=S.pending.length;
+    if(back<=3){S.rep=clamp(S.rep+0.15,1,5);S.fans+=30;
+      UI.toast("📸 探店博主光顾，发货神速获好评！口碑 +0.15","good");AUD.play("fanfare")}
+    else if(back>=10){S.rep=clamp(S.rep-0.2,1,5);
+      UI.toast("📸 探店博主吐槽发货太慢，口碑 -0.2…","bad")}
+    else UI.toast("📸 探店博主默默下单，无功无过","info")}
+  S.totalRevenue+=gmv;S.monthRevenue+=gmv;
+  S.shippedSincePickup+=shipped;
+  if(shipped>0)S.flags.firstSale=true;
+  if(shipped>0)UI.fx("cash",Math.round(gmv*0.6),"+"+Math.round(gmv*0.6));
+  /* 4) 日常成本 */
+  S.money-=dailyCost();
+  /* 5) 积压惩罚（宽松：发不出货已断收入，不再重扣口碑防死亡螺旋） */
+  if(S.pending.length>CFG.PEND_HARD)S.rep=clamp(S.rep-0.15,1,5);
+  else if(S.pending.length>CFG.PEND_SOFT)S.rep=clamp(S.rep-0.06,1,5);
+  /* 6) 售后工单生成与逾期（售后保险承保时不生成工单） */
+  if(shipped>0&&rngf()<clamp(Math.min(0.1*shipped,0.6)*avgQcMult(),0,0.75)&&S.tickets.length<4){
+    if(S.itemFx.insureDays>0){S.rep=clamp(S.rep+0.05,1,5);S.itemFx._saved=(S.itemFx._saved||0)+1}
+    else{
+    const pool=S.products.filter(p=>p.devLeft<=0&&!p.artLeft);
+    const p=pool.length?pool[Math.floor(rngf()*pool.length)]:null;
+    S.tickets.push({id:S.tid++,type:TICKET_TYPES[Math.floor(rngf()*3)],
+      product:p?p.name:"店铺订单",price:p?p.price:29,cost:p?p.cost:8,daysLeft:CFG.TICKET_DAYS});
+    UI.fx("alert");
+  }}
+  /* 6.5) 客服自动处理售后（按编制能力） */
+  let svc=staffServiceCap();
+  while(svc>0&&S.tickets.length){
+    const t=S.tickets.shift();svc--;
+    S.money-=t.cost+CFG.FULFILL;S.rep=clamp(S.rep+0.08,1,5);
+    const who=S.staff.find(s=>s.role==="service");
+    UI.toast(`客服「${who?who.name:"？"}」已自动补发处理「${t.product}」售后`,"good");
+  }
+  for(let i=S.tickets.length-1;i>=0;i--){const t=S.tickets[i];t.daysLeft--;
+    if(t.daysLeft<0){S.tickets.splice(i,1);S.money-=Math.round(t.price*0.5);
+      S.rep=clamp(S.rep-0.15,1,5);
+      UI.toast(`售后超时：${t.product} 自动退款，口碑下降`,"bad");}}
+  /* 7) 粉丝与热度衰减（直播风格影响涨粉） */
+  const fanMult=S.live.active&&CFG.STYLES[S.live.style]?CFG.STYLES[S.live.style].fanMult:1;
+  S.fans+=(orders-lost)*0.5*(S.rep/3)*fanMult*(1+(lvlBuff().fan||0))+(S.fac&&S.fac.brand?10:0);   // 品牌体验馆：自然涨粉 +10/天
+  if(!S.flags.liveUnlock&&S.fans>=CFG.LIVE.UNLOCK_FANS){S.flags.liveUnlock=true;
+    diary(`粉丝破 ${CFG.LIVE.UNLOCK_FANS}，解锁直播间！`,day);
+    UI.banner("🎬 直播解锁","底部按钮开启你的第一场直播！")}
+  S.products.forEach(p=>{
+    if(!p.hot&&p.heat>=60){p.hot=true;diary(`「${p.name}」卖爆了，成了镇店爆款`,day)}
+    if(S.live.active&&p.id===S.live.pid)p.heat+=CFG.LIVE.HEAT; // 直播主推热度
+    p.heat=Math.max(0,p.heat-(0.8+p.heat*0.012+(p._st||0)*0.25));p._st=0;   // 自然退烧 + 市场饱和：卖得越火爆降温越快，逼你持续上新
+    if(p.fresh>0)p.fresh--;
+    if(p.devLeft>0){p.devLeft--;
+      if(p.devLeft===0){   // 研发完成 → 进入美工素材阶段（美工部玩法）
+        const dsg=S.staff.find(s=>s.role==="designer");
+        p.artLeft=dsg?(dsg.level>=3?1:2):3;   // 有美工快、Lv3 起隔天交稿；没美工自己套模板要 3 天
+        p.artQ=0;
+        UI.toast(dsg?`🎨 研发完成！美工「${dsg.name}」开始制作「${p.name}」素材（${p.artLeft} 天）`
+                    :`「${p.name}」研发完成，但没有美工——自己套模板做图（${p.artLeft} 天）`,"info");}}
+    else if(p.artLeft>0){p.artLeft--;
+      if(p.artLeft<=0){   // 素材定稿，正式上架：素材质量 → 首发热度加成
+        const dsg=S.staff.find(s=>s.role==="designer");
+        const q=Math.max(0,(dsg?3+dsg.level*2:1)+(p.artQ||0));
+        p.heat+=q;p.stock+=CFG.RESTOCK_QTY;p.artLeft=0;
+        if(p.pre===1)p.fresh=5;          // 蓄水预热：新鲜期 5 天
+        if(p.pre===2)p.heat+=25;         // 达人种草：自带热度
+        p.fresh=p.fresh||4;
+        UI.toast(`🎨 素材定稿，「${p.name}」正式上架！素材质量：首发热度 +${q}`,"good");
+        UI.fx("confetti",1);diary(`「${p.name}」素材过审上架（首发热度 +${q}）`,day);}}
+  });
+  /* 8) 计时器与决策事件卡 */
+  if(S.adDays>0)S.adDays--;
+  if(S.promoDays>0)S.promoDays--;
+  if(S.adFx.adBoost>0)S.adFx.adBoost--;   // 激励视频增益用掉一天
+  if(S.adFx.revBoost>0)S.adFx.revBoost--;
+  if(S.itemFx.rocketDays>0)S.itemFx.rocketDays--;
+  if(S.itemFx.insureDays>0){S.itemFx.insureDays--;
+    if(S.itemFx.insureDays===0&&S.itemFx._saved){UI.toast(`🎫 保险期结束，共承保 ${S.itemFx._saved} 次售后，口碑无损`,"info");S.itemFx._saved=0}}
+  if(S.hikeDays>0)S.hikeDays--;
+  if(S.debt>0){S.debt=Math.round(S.debt*(1+CFG.LOAN.RATE));   // 贷款利滚利
+    if(!S.flags.debtWarn&&S.debt>loanLimit()*1.5){S.flags.debtWarn=true;
+      UI.toast("🏦 银行催收：欠款已超额度 150%！","bad");diary("欠款滚到额度一倍半，银行来催了",day)}}
+  for(const hc of CFG.HIDDEN)if(hc.cond(S)&&!S.flags.hiddenSeen[hc.name]){   // 隐藏品类解锁播报
+    S.flags.hiddenSeen[hc.name]=true;
+    UI.toast(`🔍 解锁隐藏品类「${hc.name}」！研发面板新增神秘赛道`,"good");
+    UI.banner("🔍 新品类发现",`「${hc.name}」加入研发列表！`);diary(`解锁隐藏品类「${hc.name}」`,day)}
+  if(S.deckCd>0)S.deckCd--;
+  if(day%15===0&&day>2&&!S.pendingEvent&&S.deckCd<=0)triggerDeck("promofest");   // 每 15 天平台大促日
+  else if(S.staff.some(s=>s.role==="designer")&&S.staff.some(s=>s.role==="operator")&&rngf()<0.056&&S.deckCd<=0&&!S.pendingEvent)
+    triggerDeck("artclash");   // 美工部：美工×运营随机冲突（两岗位在编才有戏）
+  else if(rngf()<CFG.EVENT_CHANCE&&S.deckCd<=0)triggerDeck();
+  /* 8.5) 直播计时与员工成长/疲劳结算 */
+  if(S.live.active){S.live.daysLeft--;if(S.live.daysLeft<=0)endLive(false);}
+  else if(S.live.cool>0)S.live.cool--;
+  S.staff.forEach(s=>{
+    const wasRest=s.resting;s.resting=false;          // 休息只持续一天
+    if(wasRest)return;                                // 休息日：不积累经验也不积累疲劳
+    if(!(s.role==="anchor"&&!S.live.active)){s.exp+=7;checkLevel(s)}
+    s.fatigue=clamp(s.fatigue+(s.role==="anchor"&&S.live.active?CFG.FATIGUE.ANCHOR_LIVE:CFG.FATIGUE.DAILY)-decorRest(),0,100);
+    if(s.fatigue>=100){s.resting=true;s.fatigue=Math.max(0,100-CFG.FATIGUE.REST);
+      UI.toast(`😱「${s.name}」累坏了，明天带薪躺平一天`,"bad")}
+  });
+  /* 8.6) 仓管员自动补货（休息日不干活，资金留安全垫防补破产） */
+  S.staff.forEach(s=>{
+    if(s.role!=="warehouse"||s.resting)return;
+    S.products.forEach(p=>{
+      if(p.devLeft>0||p.stock>=CFG.WAREHOUSE.TRIGGER)return;
+      const cost=Math.ceil(p.cost*CFG.RESTOCK_QTY*(S.hikeDays>0?1.5:1)*(s.level>=3?0.8:1));
+      if(S.money<cost+CFG.WAREHOUSE.SAFETY)return;
+      S.money-=cost;p.stock+=CFG.RESTOCK_QTY;
+      UI.fx("box",p.id);   // 补货动画：仓管员头顶冒箱 + 货架飘 +50
+      UI.toast(`📦 仓管员「${s.name}」补了货：「${p.name}」+${CFG.RESTOCK_QTY}${s.level>=3?"（8 折）":""}`,"info");
+    });
+  });
+  /* 8.7) 公司级大事记：对赌结算 / 分红 / 新大事访客上门 */
+  if(S.flags.beBet&&S.day>=S.flags.beBet.end)settleBet();
+  if(S.flags.be.vc==="share"&&S.day%30===0){S.money-=300;
+    UI.toast("💼 投资人分红日：-¥300","info")}
+  checkBigEvents();
+  /* 9) 等级与里程碑 */
+  const li=levelIdx(S.fans);
+  if(li>S.level){S.level=li;const bd=buffDesc(CFG.LEVELS[li][2]);
+    UI.banner("🎉 店铺升级",`获得称号「${CFG.LEVELS[li][1]}」${bd?"｜"+bd:""}`);UI.fx("heart");UI.fx("confetti",li);
+    diary(`店铺升级为「${CFG.LEVELS[li][1]}」${bd?"（"+bd+"）":""}`,day)}
+  if(!S.flags.fan1000&&S.fans>=1000){S.flags.fan1000=true;UI.banner("🔥 粉丝破千","小店开始被看见了！")}
+  if(!S.flags.repGold&&S.rep>=4.8){S.flags.repGold=true;   // 满口碑里程碑：永久曝光 +10%
+    UI.banner("🏅 金牌口碑店铺","老客口口相传，曝光永久 +10%！");diary("口碑逼近满分，拿到金牌店铺称号",day);UI.fx("confetti",9)}
+  if(!S.flags.bigDay&&orders>=50){S.flags.bigDay=true;UI.banner("💥 爆单啦！",`今日 ${orders} 单！`)}
+  const MS=[10000,25000,60000];
+  while(S.flags.msRev<MS.length&&S.totalRevenue>=MS[S.flags.msRev]){
+    S.flags.msRev++;diary(`累计营业额突破 ${fmtY(MS[S.flags.msRev-1])}`,day)}
+  /* 9.5) 进阶目标链推进：每达成一阶段送永久徽章 */
+  while(S.goalIdx<CFG.GOALS.length&&S.totalRevenue>=CFG.GOALS[S.goalIdx].rev){
+    const g=CFG.GOALS[S.goalIdx];S.goalIdx++;
+    const bd=buffDesc(g.buff);
+    UI.banner("🎯 "+g.name+"达成",`下一阶段：${CFG.GOALS[S.goalIdx]?CFG.GOALS[S.goalIdx].name+" "+fmtY(CFG.GOALS[S.goalIdx].rev):"已登顶传奇！"}${bd?"｜永久加成："+bd:""}`);
+    diary(`达成${g.name}！累计营业额 ${fmtY(S.totalRevenue)}${bd?"（"+bd+"）":""}`,day);
+    UI.fx("confetti",6);UI.fx("medal")}
+  /* 9.6) 成就解锁检查：徽章收藏驱动 */
+  for(const a of CFG.ACHV){
+    if(S.achv[a.id])continue;
+    if(a.cond(S)){S.achv[a.id]=true;
+      UI.toast(`🏅 成就解锁「${a.name}」：${a.desc}${a.buff?"（永久加成："+buffDesc(a.buff)+"）":""}`,"good");
+      diary(`成就达成「${a.name}」`,day);UI.fx("medal")}}
+  /* 目标达成后的无尽奖励：每 20k 营业额送一件随机道具（后期金币与进度的闭环） */
+  let nextMs=S.flags.msItem||40000;
+  while(S.totalRevenue>=nextMs){
+    const keys=Object.keys(CFG.ITEMS).filter(k=>!CFG.ITEMS[k].once||!(S.flags[k]||S.items[k]>0));
+    const k=keys[Math.floor(rngf()*keys.length)]||"giftbox";
+    S.items[k]=(S.items[k]||0)+1;S.flags.msItem=nextMs+20000;
+    UI.banner("🎁 里程碑奖励",`营业额突破 ${fmtY(nextMs)}，获得「${CFG.ITEMS[k].name}」×1`);
+    diary(`累计营业额突破 ${fmtY(nextMs)}，平台寄来奖励道具「${CFG.ITEMS[k].name}」`,day);
+    UI.fx("confetti",3);nextMs+=20000}
+  /* 10) 月报（自由经营：只按月结算，不再强制终局） */
+  if(day%30===0)diary(`开店满 ${day/30} 个月，累计营业额 ${fmtY(S.totalRevenue)}`,day);
+  if((day)%30===0)UI.openMonth(day/30);
+  else if(orders-lost>0)UI.toast(`第${day}天：成交 ${orders-lost} 单，发货 ${shipped} 单`,"info");
+  /* 11) 快递员取件演出 */
+  if(S.shippedSincePickup>=6){S.shippedSincePickup=0;S.fx.push({t:"pickup"});}
+  /* 12) 破产判定：每天首次可看视频拿应急金自救，之后正常破产 */
+  if(S.money<CFG.BANKRUPT){
+    if((S.flags.bailDay||0)>=day)UI.openEnd(true);
+    else{S.flags.bailDay=day;UI.openBailout()}}
+  UI.save();
+}
+/* ---- 决策事件卡：弹出面板让玩家做选择，直接影响数值 ---- */
+function pickSoldProduct(){
+  const ps=S.products.filter(p=>p.devLeft<=0&&!p.artLeft);
+  return ps.length?ps.reduce((a,b)=>(a.heat||0)>(b.heat||0)?a:b):null}
+const DECK=[
+  {id:"influencer",w:3,t:"🤝 达人求合作",d:"一位腰部达人想付费合作，开价 ¥500 推广你的在售商品。",
+   opts:[
+    {l:"签约合作（-¥500）",ok:s=>s.money>=500,f:()=>{S.money-=500;const p=pickSoldProduct();
+      if(p)p.heat+=28;S.fans+=60;return"合作视频小爆！主推商品热度 +28，粉丝 +60"}},
+    {l:"婉拒",f:()=>"省下了预算，但错过了一波曝光"}]},
+  {id:"clearance",w:3,t:"📦 供应商清仓",d:"长期合作的供应商搞清仓特惠：¥350 囤 50 件热销商品。",
+   opts:[
+    {l:"囤货（-¥350）",ok:s=>s.money>=350,f:()=>{S.money-=350;const p=pickSoldProduct();
+      if(!p)return"没有在售商品，钱白花了";p.stock+=50;return`「${p.name}」库存 +50，相当于半价补货`}},
+    {l:"错过",f:()=>"省下的钱留在账上"}]},
+  {id:"logistics",w:2,t:"🚚 物流集体投诉",d:"快递爆仓，一批顾客催单投诉，再拖要出大事。",
+   opts:[
+    {l:"切换顺丰补偿（-¥300）",ok:s=>s.money>=300,f:()=>{S.money-=300;S.rep=clamp(S.rep+0.25,1,5);
+      return"顾客收到补偿券，口碑 +0.25"}},
+    {l:"让大家再等等",f:()=>{S.rep=clamp(S.rep-0.25,1,5);S.fans=Math.max(0,S.fans-20);
+      return"口碑 -0.25，掉粉 20……下次要早做预案"}}]},
+  {id:"rival",w:2,t:"🏷 竞品降价突袭",d:"对头店铺半夜降价，你的流量肉眼可见地变少了。",
+   opts:[
+    {l:"跟进促销（-¥200，2 天曝光 ×1.5）",ok:s=>s.money>=200,f:()=>{S.money-=200;S.promoDays=Math.max(S.promoDays,2);
+      return"价格战打响！2 天内曝光 ×1.5"}},
+    {l:"硬扛不打价格战",f:()=>{if(rngf()<0.5){S.rep=clamp(S.rep+0.15,1,5);
+      return"顾客认可你的品质，口碑 +0.15"}S.rep=clamp(S.rep-0.2,1,5);
+      return"客流被抢走不少，口碑 -0.2"}}]},
+  {id:"event101",w:2,t:"💼 平台小二邀约",d:"平台活动位还剩最后一个，报名费 ¥400，为期 2 天。",
+   opts:[
+    {l:"报名（-¥400，2 天曝光 ×2）",ok:s=>s.money>=400,f:()=>{S.money-=400;S.promoDays=Math.max(S.promoDays,2);
+      return"上了活动首页，2 天内曝光 ×2！"}},
+    {l:"放弃坑位",f:()=>"把机会让给了同行"}]},
+  {id:"fansday",w:2,t:"💝 老客回馈日",d:"粉丝群喊着想搞回馈：免费送出 10 件商品答谢老客。",
+   opts:[
+    {l:"送！（库存 -10）",ok:s=>S.products.filter(p=>p.devLeft<=0).reduce((a,p)=>a+p.stock,0)>=10,
+     f:()=>{let n=10;S.products.filter(p=>p.devLeft<=0&&p.stock>0).forEach(p=>{
+       if(n>0){const k=Math.min(p.stock,n);p.stock-=k;n-=k}});
+       S.rep=clamp(S.rep+0.3,1,5);S.fans+=40;return"晒单刷屏！口碑 +0.3，粉丝 +40"}},
+    {l:"这次先算了",f:()=>"库存要紧，粉丝表示理解"}]},
+  {id:"interview",w:2,t:"📰 本地媒体采访",d:"区电视台想报道你的创业故事（免费），可能带火也可能没人看。",
+   opts:[
+    {l:"接受采访",f:()=>{if(rngf()<0.6){S.rep=clamp(S.rep+0.2,1,5);S.fans+=50;
+      return"报道火了！口碑 +0.2，粉丝 +50"}return"节目冷门，没什么水花"}},
+    {l:"低调拒绝",f:()=>"继续闷声做生意"}]},
+  {id:"audit",w:1,t:"🧾 平台抽查",d:"平台抽查售后响应速度，口碑越差罚款风险越高。",
+   opts:[
+    {l:"主动整改（-¥150）",ok:s=>s.money>=150,f:()=>{S.money-=150;S.rep=clamp(S.rep+0.1,1,5);
+      return"整改到位还拿了服务徽章，口碑 +0.1"}},
+    {l:"置之不理",f:()=>{if(rngf()<0.5){S.money-=300;return"被判定响应不达标，罚款 ¥300"}
+      return"侥幸过关，没人来找麻烦"}}]},
+  /* ---- 中后期事件（v5 扩充） ---- */
+  {id:"meme",w:2,t:"🔥 热搜梗爆发",d:"你的商品梗上了热搜！能不能接住这泼天流量？",
+   opts:[
+    {l:"连夜追热点（-¥200）",ok:s=>s.money>=200,f:()=>{S.money-=200;const p=pickSoldProduct();
+      if(!p)return"没在售商品，流量错过了";p.heat+=60;return`反应神速！「${p.name}」热度 +60`}},
+    {l:"围观就好",f:()=>"热度三天就退，不追也罢"}]},
+  {id:"factory",w:2,t:"🏭 工厂直供",d:"合作工厂年底冲量：¥600 直供全部在售商品各 +40 库存。",
+   opts:[
+    {l:"囤一笔（-¥600）",ok:s=>s.money>=600,f:()=>{S.money-=600;let n=0;
+      S.products.forEach(p=>{if(p.devLeft<=0){p.stock+=60;n++}});
+      return n?`${n} 款商品库存 +60，半年不用愁`:"没有在售商品，钱白花了"}},
+    {l:"仓库满了",f:()=>"省下预算，账上更踏实"}]},
+  {id:"poach",w:2,t:"🎯 竞对来挖角",d:"同行盯上了你的员工，开出双倍薪水。",
+   opts:[
+    {l:"加薪挽留（-¥300）",ok:s=>s.money>=300&&S.staff.length>0,f:()=>{S.money-=300;
+      const s=S.staff[Math.floor(rngf()*S.staff.length)];s.exp+=60;checkLevel(s);
+      return`「${s.name}」被诚意打动，经验 +60`}},
+    {l:"爱走不走",f:()=>{if(S.staff.length){const s=S.staff[Math.floor(rngf()*S.staff.length)];
+      s.fatigue=clamp((s.fatigue||0)+25,0,100);return`「${s.name}」有点心寒，疲劳 +25`}return"暂时没人被挖"}}]},
+  {id:"rumor",w:2,t:"📉 负面舆情",d:"有博主发视频吐槽你的售后慢，评论区吵起来了。",
+   opts:[
+    {l:"公开道歉并补偿（-¥400）",ok:s=>s.money>=400,f:()=>{S.money-=400;S.rep=clamp(S.rep+0.1,1,5);
+      return"真诚回应赢得好感，口碑 +0.1"}},
+    {l:"冷处理",f:()=>{S.rep=clamp(S.rep-0.6,1,5);return"舆论发酵，口碑 -0.6"}}]},
+  {id:"guild",w:1,t:"🤝 商会互助邀请",d:"本地电商商会邀请你加入：资源互通，共同成长。",
+   opts:[
+    {l:"加入商会（-¥500）",ok:s=>s.money>=500,f:()=>{S.money-=500;S.rep=clamp(S.rep+0.4,1,5);S.fans+=150;
+      return"商会人脉给力！口碑 +0.4，粉丝 +150"}},
+    {l:"独自打拼",f:()=>"省下会费，单干也自在"}]},
+  {id:"doc",w:1,t:"🎬 纪录片跟拍",d:"创作团队想跟拍小店 30 天，记录创业日常。",
+   opts:[
+    {l:"欢迎镜头",f:()=>{S.rep=clamp(S.rep+0.15,1,5);S.fans+=100;
+      return"真实感圈粉！口碑 +0.15，粉丝 +100"}},
+    {l:"只想安静做生意",f:()=>"镜头离开，小店回归平静"}]},
+  /* ---- 深度机制事件（v6：持续影响 / 周期节奏） ---- */
+  {id:"promofest",w:0,t:"🎪 平台大促日",d:"今天是平台大促日！流量池全开，抢坑位烧推广还是稳扎稳打？（每 15 天一次）",
+   opts:[
+    {l:"抢占坑位（-¥600，3 天曝光 ×2.5）",ok:s=>s.money>=600,f:()=>{S.money-=600;S.promoDays=Math.max(S.promoDays,3);
+      return"大促流量吃到撑！3 天内曝光 ×2.5"}},
+    {l:"小投入蹭流量（-¥200，2 天曝光 ×1.6）",ok:s=>s.money>=200,f:()=>{S.money-=200;S.promoDays=Math.max(S.promoDays,2);
+      return"蹭到大促尾巴，2 天内曝光 ×1.6"}},
+    {l:"大促躺平，不掺和",f:()=>{S.fans=Math.max(0,S.fans-30);return"同行都在抢流量，你掉粉 30……"}}]},
+  {id:"wageup",w:1,t:"📢 员工联名涨薪",d:"团队集体递上涨薪申请书：不加薪怕人心散，加了成本压力大。",
+   opts:[
+    {l:"全员涨薪 50%（持续 30 天）",f:()=>{S.flags.wageUp=S.day+30;S.staff.forEach(s=>{s.fatigue=clamp(s.fatigue-30,0,100);s.exp+=30});
+      S.staff.forEach(checkLevel);return"士气大振！30 天内工资 ×1.5，全员疲劳 -30、经验 +30"}},
+    {l:"画饼安抚：涨薪没有，未来可期",f:()=>{S.staff.forEach(s=>s.fatigue=clamp(s.fatigue+15,0,100));
+      return"大家表面答应，疲劳 +15……"}}]},
+  {id:"copycat",w:1,t:"👓 山寨店打假",d:"发现一家山寨店像素级抄袭你的招牌商品，还卖得更便宜！",
+   opts:[
+    {l:"硬刚到底：发律师函（-¥500）",ok:s=>s.money>=500,f:()=>{S.money-=500;
+      if(rngf()<0.75){S.rep=clamp(S.rep+0.4,1,5);S.fans+=200;return"打假成功登上热搜！口碑 +0.4，粉丝 +200"}
+      return"维权拉锯战耗时耗力，暂无战果"}},
+    {l:"用品质说话，不打口水仗",f:()=>{S.rep=clamp(S.rep+0.1,1,5);return"老客认准正品，口碑 +0.1"}}]},
+  {id:"surge",w:1,t:"🌊 平台流量暴涨",d:"平台服务器今天抽风放量，全网曝光暴涨——接住这波泼天富贵！",
+   opts:[
+    {l:"全速运转接流量（全员疲劳 +15）",f:()=>{S.promoDays=Math.max(S.promoDays,2);S.staff.forEach(s=>s.fatigue=clamp(s.fatigue+15,0,100));
+      return"全员加班接单！2 天曝光 ×2，但大家累坏了"}},
+    {l:"保守营业，不追流量",f:()=>{S.rep=clamp(S.rep+0.05,1,5);return"稳字当头，口碑 +0.05"}}]},
+  {id:"blackout",w:1,t:"⚡ 仓库突发停电",d:"仓库半夜停电，一批库存商品面临损耗风险。",
+   opts:[
+    {l:"连夜抢修（-¥400）",ok:s=>s.money>=400,f:()=>{S.money-=400;return"电力恢复！库存安然无恙"}},
+    {l:"听天由命",f:()=>{let lost=0;S.products.forEach(p=>{if(p.devLeft<=0&&p.stock>0){const k=Math.ceil(p.stock*0.3);p.stock-=k;lost+=k}});
+      return lost?`损耗 ${lost} 件库存……`:"运气不错，没在售库存受损"}}]},
+  {id:"topstreamer",w:1,t:"🌟 头部达人空降",d:"百万粉的头部主播路过你的直播间，愿意免费帮你带 2 天货！",
+   opts:[
+    {l:"求之不得！（2 天转化 +6%）",f:()=>{S.flags.giftLive=S.day+2;S.fans+=150;
+      return"头部效应炸裂！2 天内转化 +6%，粉丝 +150"}},
+    {l:"婉拒：风格不合",f:()=>{return"错过一波泼天流量……"}}]},
+  {id:"rentup",w:1,t:"🏚 房东涨租",d:"房东笑眯眯地递来通知：地段火了，租金每月要涨。",
+   opts:[
+    {l:"咬牙接受（日常成本永久 +60/天）",f:()=>{S.flags.rentUp=true;return"签了新约。成本上去了，但地段也更值钱"}},
+    {l:"搬去偏远仓库（口碑 -0.3，不涨租）",f:()=>{S.rep=clamp(S.rep-0.3,1,5);
+      return"搬到了城中村，老客找不到门，口碑 -0.3"}}]},
+  {id:"charity",w:1,t:"💖 公益捐助倡议",d:"慈善机构邀请你捐一批商品给山区，宣传效应未知。",
+   opts:[
+    {l:"捐出 20 件商品（库存 -20）",ok:s=>S.products.filter(p=>p.devLeft<=0).reduce((a,p)=>a+p.stock,0)>=20,
+     f:()=>{let n=20;S.products.filter(p=>p.devLeft<=0&&p.stock>0).forEach(p=>{
+       if(n>0){const k=Math.min(p.stock,n);p.stock-=k;n-=k}});
+       S.rep=clamp(S.rep+0.5,1,5);S.fans+=250;
+       return"善举被广泛报道！口碑 +0.5，粉丝 +250"}},
+    {l:"默默转发支持一下",f:()=>{S.rep=clamp(S.rep+0.05,1,5);return"心意到了，口碑 +0.05"}}]},
+  /* 美工部玩法：美工 × 运营随机冲突（仅两种岗位都在编时随机触发，w:0 不进随机池） */
+  {id:"artclash",w:0,t:"🎨 部门冲突：美工 × 运营",d:"美工和运营吵翻了！运营嫌素材「太艺术、没卖点」要大改，美工护稿说运营根本不懂审美。你来断。",
+   opts:[
+    {l:"力挺美工（素材精修↑，运营闹情绪）",
+     f:()=>{const o=S.staff.find(s=>s.role==="operator");
+       S.products.forEach(p=>{if(p.artLeft>0)p.artQ=(p.artQ||0)+3});
+       if(o)o.fatigue=clamp(o.fatigue+15,0,100);
+       return"按美工的稿子走，素材偷偷加了细节（质量 ↑）；运营憋着气干活（疲劳 +15）"}},
+    {l:"听运营的（赶工提前上架，素材降级）",
+     f:()=>{const d=S.staff.find(s=>s.role==="designer");
+       S.products.forEach(p=>{if(p.artLeft>0){p.artLeft=Math.max(1,p.artLeft-1);p.artQ=(p.artQ||0)-2}});
+       if(d)d.fatigue=clamp(d.fatigue+20,0,100);
+       return"素材连夜赶工提前交稿（上架提速），但美工心很累（疲劳 +20）"}},
+    {l:"组局团建（-¥250，全员息怒）",ok:s=>s.money>=250,
+     f:()=>{S.money-=250;S.staff.forEach(s=>s.fatigue=clamp(s.fatigue-15,0,100));
+       S.products.forEach(p=>{if(p.artLeft>0)p.artQ=(p.artQ||0)+1});
+       return"一顿火锅下去两人和好了：全员疲劳 -15，素材顺手补了两笔细节"}},
+   ]},
+];
+function triggerDeck(forceId){
+  const tot=DECK.reduce((s,e)=>s+e.w,0);let r=rngf()*tot,ev=null;
+  if(forceId)ev=DECK.find(e=>e.id===forceId);   // 周期强制事件（如 15 天大促）
+  if(!ev)for(const e of DECK){r-=e.w;if(r<=0){ev=e;break}}
+  S.deckCd=CFG.DECK_CD;
+  S.pendingEvent=ev;                          // 事件挂起，等 NPC 上门后再弹面板
+  spawnVisitor(ev.id);                        // 事件 NPC 从门口走入（活人感）
+  AUD.play("doorbell");
+  UI.toast("🔔 有人上门找老板！","info");
+}
+
+/* ---- 公司级大事记：里程碑触发、深度决策、改变经营走向（区别于普通事件卡） ---- */
+const BIG_EVENTS=[
+ {id:"vc",t:"💼 投资人来访",d:"知名机构看中了你的小店模式，愿意投钱入股。签「对赌协议」钱多但压力巨大——你敢接吗？",
+  cond:s=>s.fans>=2000&&!s.flags.be.vc,
+  opts:[
+   {l:"对赌协议：立拿 ¥15,000（60 天内营业额冲 ¥100,000，成功再奖 ¥25,000，失败口碑 -0.8）",
+    f:()=>{S.money+=15000;S.flags.be.vc="bet";S.flags.beBet={end:S.day+60};
+      return"签约！资金到账，对赌 60 天倒计时开始"}},
+   {l:"小额入股：立拿 ¥6,000，每月分红 -¥300",
+    f:()=>{S.money+=6000;S.flags.be.vc="share";return"投资人入股完成，每月发薪日分红 ¥300"}},
+   {l:"婉拒：小店要独立自主",
+    f:()=>{S.rep=clamp(S.rep+0.2,1,5);return"投资人欣赏你的骨气，口碑 +0.2"}}]},
+ {id:"tax",t:"🧾 税务稽查上门",d:"税务部门例行检查电商经营数据。规范申报还是动歪脑筋？后果自负。",
+  cond:s=>s.totalRevenue>=30000&&!s.flags.be.tax,
+  opts:[
+   {l:"如实申报：补税 10% 现金（上限 ¥4,000）",
+    f:()=>{const tax=Math.min(Math.round(S.money*0.1),4000);S.money-=tax;
+      S.rep=clamp(S.rep+0.3,1,5);return`诚信经营，补税 ${fmtY(tax)}，口碑 +0.3`}},
+   {l:"找代账筹划：-¥600，有小概率露馅",
+    ok:s=>s.money>=600,f:()=>{S.money-=600;
+      if(rngf()<0.3){S.money=Math.max(0,S.money-2000);S.rep=clamp(S.rep-0.3,1,5);return"筹划露馅，罚款 ¥2,000，口碑 -0.3"}
+      S.rep=clamp(S.rep+0.1,1,5);return"合规筹划过关，口碑 +0.1"}},
+   {l:"硬扛不报：赌一把",
+    f:()=>{if(rngf()<0.7){S.money=Math.max(0,S.money-4000);S.rep=clamp(S.rep-0.5,1,5);
+        return"被查实偷漏税，重罚 ¥4,000，口碑 -0.5"}
+      return"侥幸蒙混过关……但别再心存侥幸"}}]},
+ {id:"gala",t:"🎊 员工提议办年会",d:"跟着你打拼的团队想办一场年会，犒劳每个人的辛苦。办不办、怎么办？",
+  cond:s=>s.day>=45&&s.staff.length>=2&&!s.flags.be.gala,
+  opts:[
+   {l:"大操大办：-¥800，全员疲劳清零、经验 +25",
+    ok:s=>s.money>=800,f:()=>{S.money-=800;S.staff.forEach(s=>{s.fatigue=0;s.exp+=25});
+      S.staff.forEach(checkLevel);return"年会圆满！全员满血复活、经验 +25"}},
+   {l:"简单聚餐：-¥200，全员疲劳 -40",
+    ok:s=>s.money>=200,f:()=>{S.money-=200;S.staff.forEach(s=>s.fatigue=clamp(s.fatigue-40,0,100));
+      return"热热闹闹吃了一顿，疲劳 -40"}},
+   {l:"今年就省了吧",f:()=>{S.staff.forEach(s=>s.fatigue=clamp(s.fatigue+10,0,100));
+      return"大家有点失落，疲劳 +10"}}]},
+ {id:"merger",t:"🖤 巨头收购邀约",d:"大平台带着巨额报价来了：卖掉店铺就此上岸，或拒绝收购继续征战。",
+  cond:s=>s.officeLevel>=3&&!s.flags.be.merger,
+  opts:[
+   {l:"拒绝收购：这里是我的梦想",
+    f:()=>{S.rep=clamp(S.rep+0.3,1,5);S.fans+=300;
+      return"「小店虽小，是我的招牌」——口碑 +0.3，粉丝 +300"}},
+   {l:"接受收购：提前结算创业成果",
+    f:()=>{S.flags.be.merger="sold";S.flags.acquired=true;UI.openEnd("acquired");return null}}]},
+];
+function checkBigEvents(){
+  for(const ev of BIG_EVENTS){
+    if(ev.cond(S)){
+      S.pendingEvent=ev;spawnVisitor(ev.id);AUD.play("doorbell");
+      UI.toast("🔔 有重要访客上门！","info");return}}}
+function settleBet(){   // 对赌协议到期结算
+  const ok=S.totalRevenue>=100000;
+  if(ok){S.money+=25000;S.rep=clamp(S.rep+0.5,1,5);
+    UI.banner("🏆 对赌成功",`营业额达标！投资人追加奖励 ¥25,000`);diary("对赌协议达标，获得追加投资 ¥25,000",S.day);UI.fx("confetti",5)}
+  else{S.rep=clamp(S.rep-0.8,1,5);
+    UI.banner("😞 对赌失败","营业额未达标，口碑 -0.8");diary("对赌协议失败，业界声誉受损",S.day)}
+  S.flags.beBet=null}
+
+/* ============================ RENDER ============================ */
+/* 只读 S 状态绘制 240x240 像素正方形场景；演出实体在本层 */
+const CV=$("#scene"),CX=CV.getContext("2d");
+CX.imageSmoothingEnabled=false;
+const T=16, COLS=15, ROWS=15;
+const W=COLS*T, H=ROWS*T;
+
+/* 程序化地形烘焙 */
+function mkTile(fn){const c=document.createElement("canvas");c.width=T;c.height=T;
+  const g=c.getContext("2d");fn(g);return c}
+function bakeTerrain(){bakeOfficeSkin(S&&S.officeLevel||1)}
+/* 摆设物件像素素材（场景编辑系统，key 即 SPR["dec_"+id]） */
+function bakeDecor(){
+  SPR.dec_potted=mkTile(g=>{g.fillStyle="#c96a3a";g.fillRect(5,11,6,4);g.fillStyle="#a8532c";g.fillRect(5,11,6,1);
+    g.fillStyle="#5ba14e";g.fillRect(4,4,8,7);g.fillRect(3,6,10,3);g.fillStyle="#7ac468";g.fillRect(6,5,2,4);g.fillRect(9,7,2,3);
+    g.fillStyle="#3d7a35";g.fillRect(4,9,8,2);});
+  SPR.dec_shelf2=mkTile(g=>{g.fillStyle="#6a4426";g.fillRect(1,2,14,13);g.fillStyle="#8a5a34";g.fillRect(2,3,12,2);g.fillRect(2,8,12,2);
+    g.fillStyle="#d94f45";g.fillRect(3,1,3,2);g.fillStyle="#3f7fc1";g.fillRect(7,6,3,2);g.fillStyle="#f2a24b";g.fillRect(4,6,2,2);
+    g.fillStyle="#5ba14e";g.fillRect(10,1,2,2);g.fillStyle="#c95d8f";g.fillRect(11,6,2,2);});
+  SPR.dec_light=mkTile(g=>{g.fillStyle="#6a6a72";g.fillRect(7,0,2,4);g.fillStyle="#55555c";g.fillRect(4,4,8,3);
+    g.fillStyle="#fff6d8";g.fillRect(3,7,10,4);g.fillStyle="#ffe89a";g.fillRect(4,8,8,2);
+    g.fillStyle="#6a6a72";g.fillRect(5,11,1,2);g.fillRect(10,11,1,2);});
+  SPR.dec_coffee=mkTile(g=>{g.fillStyle="#8a3a2c";g.fillRect(3,3,10,12);g.fillStyle="#a34a38";g.fillRect(3,3,10,2);
+    g.fillStyle="#2b2330";g.fillRect(5,6,6,4);g.fillStyle="#8ec7e0";g.fillRect(5,6,6,1);
+    g.fillStyle="#6a4426";g.fillRect(6,11,4,3);g.fillStyle="#f2d24b";g.fillRect(10,6,2,1);});
+  SPR.dec_frame=mkTile(g=>{g.fillStyle="#6a4426";g.fillRect(1,2,14,12);
+    g.fillStyle="#f4e3bc";g.fillRect(3,4,4,4);g.fillRect(9,4,4,4);g.fillRect(3,9,4,3);g.fillRect(9,9,4,3);
+    g.fillStyle="#e88f3c";g.fillRect(4,5,2,2);g.fillStyle="#c95d8f";g.fillRect(10,5,2,2);
+    g.fillStyle="#3f7fc1";g.fillRect(4,10,2,1);g.fillStyle="#5ba14e";g.fillRect(10,10,2,1);});
+  SPR.dec_ac=mkTile(g=>{g.fillStyle="#e8e4da";g.fillRect(1,2,14,7);g.fillStyle="#c8c4ba";g.fillRect(1,2,14,1);g.fillRect(1,8,14,1);
+    g.fillStyle="#8ec7e0";g.fillRect(3,4,10,3);g.fillStyle="#b8dcee";g.fillRect(3,4,10,1);
+    g.fillStyle="#c8c4ba";g.fillRect(2,9,1,3);g.fillRect(13,9,1,3);});
+  SPR.dec_catbed=mkTile(g=>{g.fillStyle="#c95d8f";g.fillRect(2,8,12,7);g.fillStyle="#a34a70";g.fillRect(2,8,12,2);
+    g.fillStyle="#f4e3bc";g.fillRect(4,10,8,4);g.fillStyle="#8a6a4a";
+    g.fillRect(5,10,1,1);g.fillRect(10,10,1,1);g.fillRect(7,11,2,1);g.fillRect(6,12,4,1);});
+  SPR.dec_crane=mkTile(g=>{g.fillStyle="#d94f45";g.fillRect(2,1,12,14);g.fillStyle="#b23a32";g.fillRect(2,1,12,2);g.fillRect(2,13,12,2);
+    g.fillStyle="#fff6d8";g.fillRect(4,4,8,8);g.fillStyle="#f2d24b";g.fillRect(6,5,4,3);g.fillStyle="#5ba14e";g.fillRect(6,9,3,2);
+    g.fillStyle="#f2d24b";g.fillRect(11,4,2,2);});
+  SPR.dec_mic=mkTile(g=>{g.fillStyle="#55555c";g.fillRect(6,1,5,5);g.fillStyle="#8a8a92";g.fillRect(7,2,3,3);
+    g.fillStyle="#d94f45";g.fillRect(7,6,3,7);g.fillStyle="#b23a32";g.fillRect(7,6,1,7);
+    g.fillStyle="#3a2a20";g.fillRect(5,13,7,2);g.fillStyle="#f2d24b";g.fillRect(11,7,2,1);});
+  SPR.dec_boxart=mkTile(g=>{g.fillStyle="#c9924a";g.fillRect(3,9,10,6);g.fillStyle="#b57e3a";g.fillRect(3,9,10,2);
+    g.fillStyle="#d9a85e";g.fillRect(4,3,8,6);g.fillStyle="#b57e3a";g.fillRect(4,3,8,1);
+    g.fillStyle="#d94f45";g.fillRect(7,3,2,12);g.fillStyle="#f2d24b";g.fillRect(3,8,10,1);
+    g.fillStyle="#fff6d8";g.fillRect(5,5,2,2);});
+  SPR.dec_aquarium=mkTile(g=>{g.fillStyle="#6a7f9a";g.fillRect(1,3,14,12);g.fillStyle="#8ec7e0";g.fillRect(2,5,12,9);
+    g.fillStyle="#5ba14e";g.fillRect(3,11,2,3);g.fillRect(12,10,1,4);
+    g.fillStyle="#f2a24b";g.fillRect(5,8,3,2);g.fillStyle="#c95d8f";g.fillRect(10,10,3,2);
+    g.fillStyle="#fff6d8";g.fillRect(6,6,1,1);g.fillRect(9,7,1,1);});
+  SPR.dec_blindbox=mkTile(g=>{g.fillStyle="#6a4426";g.fillRect(1,2,14,13);g.fillStyle="#8a5a34";g.fillRect(1,2,14,2);
+    g.fillStyle="#d94f45";g.fillRect(3,5,4,8);g.fillStyle="#3f7fc1";g.fillRect(8,5,4,8);g.fillStyle="#f2a24b";g.fillRect(3,5,1,8);
+    g.fillStyle="#fff6d8";g.fillRect(9,7,2,2);g.fillStyle="#f2d24b";g.fillRect(4,7,2,2);});
+}
+function bakeOfficeSkin(lv){
+  lv=lv||1;
+  const SK={  // 每级装修色板：地板 / 墙面 / 踢脚
+    1:{fa:"#b07e4a",fa2:"#9a6a3c",fa3:"#c08e58",fb:"#aa7844",fb2:"#946438",fb3:"#ba8a52",
+       w:"#e8d0a0",wl:"#d4b884",sk:"#8a5a34",sk2:"#6a4426"},
+    2:{fa:"#c89a62",fa2:"#b28450",fa3:"#d8ac74",fb:"#c29458",fb2:"#ac7e48",fb3:"#d2a468",
+       w:"#f2e6c8",wl:"#dfcfa8",sk:"#5a7a9a",sk2:"#3f5c78"},
+    3:{fa:"#cfc8bc",fa2:"#b8b0a2",fa3:"#ded8cc",fb:"#c8c0b2",fb2:"#b0a89a",fb3:"#d8d0c2",
+       w:"#f6efdc",wl:"#e4dcc4",sk:"#7a5230",sk2:"#5a3a28"}}[lv];
+  SPR.floorA=mkTile(g=>{g.fillStyle=SK.fa;g.fillRect(0,0,16,16);
+    g.fillStyle=SK.fa2;g.fillRect(0,15,16,1);g.fillRect(7,0,1,8);g.fillRect(12,8,1,8);
+    g.fillStyle=SK.fa3;g.fillRect(0,0,16,1);});
+  SPR.floorB=mkTile(g=>{g.fillStyle=SK.fb;g.fillRect(0,0,16,16);
+    g.fillStyle=SK.fb2;g.fillRect(0,15,16,1);g.fillRect(3,0,1,8);g.fillRect(10,8,1,8);
+    g.fillStyle=SK.fb3;g.fillRect(0,0,16,1);});
+  SPR.wall=mkTile(g=>{g.fillStyle=SK.w;g.fillRect(0,0,16,16);
+    g.fillStyle=SK.wl;for(let y=0;y<16;y+=4)g.fillRect(0,y,16,1);
+    g.fillStyle=SK.sk;g.fillRect(0,14,16,2);g.fillStyle=SK.sk2;g.fillRect(0,12,16,1);});
+  SPR.window=mkTile(g=>{g.drawImage(SPR.wall,0,0);
+    g.fillStyle="#6a4426";g.fillRect(2,3,12,10);g.fillStyle="#bfe3f2";g.fillRect(3,4,10,8);
+    g.fillStyle="#8ec7e0";g.fillRect(3,4,10,3);g.fillStyle="#6a4426";g.fillRect(7,4,1,8);g.fillRect(3,7,10,1);});
+  SPR.poster=mkTile(g=>{g.drawImage(SPR.wall,0,0);
+    g.fillStyle="#d94f45";g.fillRect(2,2,12,11);g.fillStyle="#f4e3bc";
+    g.fillRect(4,4,8,1);g.fillRect(4,6,6,1);g.fillRect(4,8,7,1);g.fillRect(4,10,4,1);
+    g.fillStyle="#f2d24b";g.fillRect(11,3,2,2);});
+  SPR.door=mkTile(g=>{g.fillStyle="#8a5a34";g.fillRect(0,0,16,16);
+    g.fillStyle="#a87244";g.fillRect(1,1,14,15);g.fillStyle="#6a4426";
+    g.fillRect(1,1,14,1);g.fillRect(1,1,1,15);g.fillRect(14,1,1,15);
+    g.fillStyle="#f2d24b";g.fillRect(11,8,2,2);g.fillStyle="#6a4426";g.fillRect(3,4,10,1);});
+  bakeDecor();
+  SPR.deskPC=mkTile(g=>{g.fillStyle="#8a5a34";g.fillRect(0,8,16,8);
+    g.fillStyle="#a87244";g.fillRect(0,8,16,2);g.fillStyle="#2b2330";g.fillRect(2,1,12,8);
+    g.fillStyle="#4a90d9";g.fillRect(3,2,10,6);g.fillStyle="#8ec7e0";g.fillRect(3,2,10,2);
+    g.fillStyle="#2b2330";g.fillRect(7,9,2,1);});
+  SPR.desk=mkTile(g=>{g.fillStyle="#8a5a34";g.fillRect(0,8,16,8);
+    g.fillStyle="#a87244";g.fillRect(0,8,16,2);g.fillStyle="#f4e3bc";g.fillRect(4,9,8,4);
+    g.fillStyle="#c8b088";g.fillRect(4,11,8,1);});
+  SPR.shelf=mkTile(g=>{g.fillStyle="#6a4426";g.fillRect(0,0,16,16);
+    g.fillStyle="#8a5a34";g.fillRect(1,2,14,3);g.fillRect(1,8,14,3);
+    g.fillStyle="#a87244";g.fillRect(2,3,12,1);g.fillRect(2,9,12,1);});
+  SPR.table=mkTile(g=>{g.fillStyle="#8a5a34";g.fillRect(0,4,16,10);
+    g.fillStyle="#a87244";g.fillRect(0,4,16,3);g.fillStyle="#6a4426";g.fillRect(1,14,2,2);g.fillRect(13,14,2,2);});
+  SPR.plant=mkTile(g=>{g.fillStyle="#e88f3c";g.fillRect(5,10,6,5);g.fillStyle="#c46a2a";g.fillRect(5,10,6,1);
+    g.fillStyle="#5ba14e";g.fillRect(4,3,8,7);g.fillRect(6,1,4,3);
+    g.fillStyle="#417a38";g.fillRect(4,8,8,2);g.fillRect(7,4,2,2);});
+  SPR.rug=mkTile(g=>{g.fillStyle="#d94f45";g.fillRect(0,0,16,16);
+    g.fillStyle="#e8786a";g.fillRect(1,1,14,14);g.fillStyle="#f2d24b";g.fillRect(6,6,4,4);});
+  SPR.trophy=mkTile(g=>{g.drawImage(SPR.wall,0,0);   // Lv3 奖杯陈列（墙饰）
+    g.fillStyle="#8a5a34";g.fillRect(3,4,10,10);g.fillStyle="#a87244";g.fillRect(4,5,8,8);
+    g.fillStyle="#f2d24b";g.fillRect(6,6,4,4);g.fillStyle="#c49a2a";g.fillRect(7,10,2,3);
+    g.fillStyle="#f2d24b";g.fillRect(5,13,6,1);});
+}
+function box(color){return mkTile(g=>{g.fillStyle="#c8a86a";g.fillRect(1,3,14,12);
+  g.fillStyle=color;g.fillRect(2,4,12,6);g.fillStyle="#a8844a";g.fillRect(1,9,14,1);
+  g.fillStyle="#e8d8b0";g.fillRect(7,3,2,12);g.fillStyle="#6a4426";g.fillRect(1,3,14,1);})}
+let PRODBOX={};
+function bakeProdBoxes(){PRODBOX={};CFG.CATS.forEach(c=>PRODBOX[c.name]=box(c.color));
+  CFG.HIDDEN.forEach(c=>PRODBOX[c.name]=box(c.color))}   // 隐藏品类也要烘焙货架盒，否则研发后场景不显示
+
+/* ---- 场景切换（办公室 ↔ 直播间） ---- */
+/* ============================ BGM ============================ */
+/* 8-bit 程序化循环 BGM：双曲目跟随场景切换，零素材依赖 */
+const BGM={
+  mode:null, step:0, nextT:0, timer:null,
+  SONGS:{
+    /* 办公室：C 大调五声，宁静轻快 */
+    office:{bpm:96,
+      lead:[523,0,659,0,784,659,880,0, 784,0,659,523,587,0,0,0,
+            523,0,659,0,784,880,1046,0, 880,784,659,0,523,0,0,0],
+      bass:[131,0,196,0,165,0,220,0, 175,0,262,0,196,0,247,0,
+            131,0,196,0,165,0,220,0, 196,0,262,0,247,0,196,0]},
+    /* 直播间：A 小调五声，节奏跳跃 */
+    studio:{bpm:126,
+      lead:[440,0,523,440,659,0,587,523, 440,0,392,440,523,0,0,0,
+            659,0,784,659,880,0,784,659, 587,523,440,0,523,0,0,0],
+      bass:[110,110,0,165,0,110,220,0, 87,87,0,131,0,98,196,0,
+            110,110,0,165,0,110,220,0, 98,98,0,147,0,165,131,0]}
+  },
+  start(mode){ if(this.mode===mode)return; this.mode=mode; this.step=0;
+    if(!this.timer)this.timer=setInterval(()=>this.tick(),50) },
+  tick(){
+    if(!AUD.ctx||AUD.mute||!this.mode)return;
+    if(this.nextT<AUD.ctx.currentTime)this.nextT=AUD.ctx.currentTime+0.05;
+    const song=this.SONGS[this.mode]; if(!song)return;
+    const spb=60/song.bpm/2, lead=song.lead, bass=song.bass;
+    while(this.nextT<AUD.ctx.currentTime+0.15){
+      const i=this.step%lead.length, off=this.nextT-AUD.ctx.currentTime;
+      if(lead[i])AUD.tone(lead[i],lead[i],spb*0.85,"square",0.022,off);
+      if(bass[i])AUD.tone(bass[i],bass[i],spb*0.9,"triangle",0.04,off);
+      this.nextT+=spb; this.step++;
+    }
+  }
+};
+
+const SCENE={mode:"office",show(m){this.mode=m;BGM.start(m==="studio"?"studio":"office")}};
+
+/* ---- 直播间地形烘焙 ---- */
+function bakeStudio(){
+  SPR.stWall=mkTile(g=>{g.fillStyle="#3a2f42";g.fillRect(0,0,16,16);
+    g.fillStyle="#332a3b";for(let y=0;y<16;y+=4)g.fillRect(0,y,16,1);
+    g.fillStyle="#1d1822";g.fillRect(0,14,16,2);
+    g.fillStyle="#d94f45";g.fillRect(14,3,1,1);g.fillRect(3,7,1,1);g.fillRect(10,11,1,1);});
+  SPR.stFloor=mkTile(g=>{g.fillStyle="#4a3b52";g.fillRect(0,0,16,16);
+    g.fillStyle="#41344a";g.fillRect(0,15,16,1);g.fillRect(7,0,1,8);g.fillRect(12,8,1,8);
+    g.fillStyle="#5a4866";g.fillRect(0,0,16,1);});
+  SPR.stCarpet=mkTile(g=>{g.fillStyle="#8a3a48";g.fillRect(0,0,16,16);
+    g.fillStyle="#7a3240";g.fillRect(0,7,16,1);g.fillRect(7,0,1,16);
+    g.fillStyle="#9a4454";g.fillRect(0,0,16,1);});
+  SPR.ringlight=mkTile(g=>{g.fillStyle="#8a8a8a";g.fillRect(7,8,2,8);g.fillRect(5,15,6,1);
+    g.fillStyle="#f2d24b";g.fillRect(4,1,8,7);g.fillStyle="#fff6d0";g.fillRect(5,2,6,5);
+    g.fillStyle="#f2d24b";g.fillRect(6,3,4,3);});
+  SPR.tripod=mkTile(g=>{g.fillStyle="#8a8a8a";g.fillRect(7,6,2,10);g.fillRect(4,15,3,1);g.fillRect(9,15,3,1);
+    g.fillStyle="#2b2330";g.fillRect(4,1,8,6);g.fillStyle="#4a90d9";g.fillRect(5,2,6,4);
+    g.fillStyle="#8ec7e0";g.fillRect(5,2,6,1);g.fillStyle="#d94f45";g.fillRect(6,3,2,2);});
+  SPR.liveSign=mkTile(g=>{g.drawImage(SPR.stWall,0,0);
+    g.fillStyle="#d94f45";g.fillRect(2,2,12,11);g.fillStyle="#f4e3bc";
+    g.fillRect(4,4,8,1);g.fillRect(4,6,6,1);g.fillRect(4,8,7,1);g.fillRect(4,10,4,1);
+    g.fillStyle="#2b2330";g.fillRect(10,8,3,3);g.fillStyle="#f2d24b";g.fillRect(11,9,1,1);});
+}
+
+/* 演出实体 */
+const hero={x:6.5*T,y:6.8*T,dir:"down",frame:0,ft:0,state:"idle",tx:0,ty:0,wait:0};
+const cour={active:false,x:0,y:0,dir:"down",frame:0,ft:0,phase:"in",wait:0};
+let floaters=[],bubbles=[],bubbleT=0;
+
+function drawText3x5(str,x,y,color){
+  CX.fillStyle=color;let cx=x;
+  for(const ch of str){const m=FONT3[ch];if(!m){cx+=2;continue}
+    for(let j=0;j<5;j++)for(let i=0;i<3;i++)if(m[j][i]==="#")CX.fillRect(cx+i,y+j,1,1);
+    cx+=4;}
+}
+function fxPos(){/* 成交漂浮位置：办公桌上方 */ return {x:6.8*T,y:7*T-6}}
+
+function stepHero(dt){
+  const speed=42*dt;
+  if(hero.state==="walk"){
+    const dx=hero.tx-hero.x,dy=hero.ty-hero.y,d=Math.hypot(dx,dy);
+    if(d<2){hero.state="act";hero.wait=rng(1.5,4);}
+    else{hero.x+=dx/d*speed;hero.y+=dy/d*speed;
+      hero.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?"right":"left"):(dy>0?"down":"up");
+      hero.ft+=dt;hero.frame=Math.floor(hero.ft/0.22)%2;}
+  }else if(hero.state==="act"){
+    hero.wait-=dt;
+    if(hero.state==="act"&&hero.wait<=0)pickWaypoint();
+  }else pickWaypoint();
+}
+const WAYPTS=[[7*T+4,6.85*T,"desk"],[1.6*T,8.4*T,"shelf"],[10.6*T,14.3*T,"pack"],[7.5*T,13.4*T,"rug"],[3.5*T,11*T,"lounge"],[11.4*T,9.5*T,"hall"]];
+function pickWaypoint(){
+  let w;do{w=WAYPTS[Math.floor(rngf()*WAYPTS.length)]}while(Math.hypot(w[0]-hero.x,w[1]-hero.y)<8);
+  hero.tx=w[0];hero.ty=w[1];hero.state="walk";hero.spot=w[2];
+}
+function drawHero(){
+  let key;
+  if(hero.state==="act"&&hero.spot==="desk"){
+    key="hero_sit_"+(Math.floor(performance.now()/280)%2);
+    CX.drawImage(spr(key),Math.round(hero.x)-8,Math.round(hero.y)-6);
+    return;
+  }
+  if(hero.state==="walk"){key="hero_"+(hero.dir==="up"?"up":hero.dir==="down"?"down":"side")+"_"+hero.frame;}
+  else key="hero_down_0";
+  const img=spr(key);
+  if(hero.dir==="left"){CX.save();CX.translate(Math.round(hero.x)+8,Math.round(hero.y)-8);CX.scale(-1,1);CX.drawImage(img,0,0);CX.restore();}
+  else CX.drawImage(img,Math.round(hero.x)-8,Math.round(hero.y)-8);
+}
+function stepCour(dt){
+  if(!cour.active){
+    if(S&&S.fx.some(f=>f.t==="pickup")){S.fx=S.fx.filter(f=>f.t!=="pickup");
+      cour.active=true;cour.phase="in";cour.x=12.9*T;cour.y=2.6*T;cour.dir="down";}
+    return;
+  }
+  const speed=40*dt;
+  cour.ft+=dt;cour.frame=Math.floor(cour.ft/0.22)%2;
+  if(cour.phase==="in"){cour.y+=speed;
+    if(cour.y>=4.8*T){cour.phase="load";cour.wait=0.9;}}
+  else if(cour.phase==="load"){cour.wait-=dt;
+    if(cour.wait<=0)cour.phase="out";}
+  else{cour.y-=speed;if(cour.y<=-20)cour.active=false;}
+}
+function drawCour(){if(!cour.active)return;
+  const key="cour_"+(cour.phase==="out"?"up":"down")+"_"+cour.frame;
+  CX.drawImage(spr(key),Math.round(cour.x)-8,Math.round(cour.y)-8);}
+function drawPile(){
+  const n=S?S.pending.length:0;
+  const lv=n>30?3:n>12?2:n>0?1:0;
+  const bx=12*T+2,by=13*T+4;   // 待发货堆放在打包台旁
+  const put=(c,x,y)=>CX.drawImage(c,x,y);
+  if(lv>=1){put(PRODBOX._any, bx,by-6);put(PRODBOX._any, bx+5,by-3);}
+  if(lv>=2){put(PRODBOX._any, bx+2,by-14);put(PRODBOX._any, bx-6,by-2);}
+  if(lv>=3){put(PRODBOX._any, bx+8,by-12);put(PRODBOX._any, bx-2,by-21);}
+}
+const SHELF_SPOTS=[[1*T+1,5*T+3],[1*T+8,5*T+3],[1*T+1,5*T+9],[1*T+8,5*T+9]];
+function drawShelfBoxes(){
+  const ps=S?S.products.filter(p=>p.devLeft<=0&&!p.artLeft):[];
+  ps.slice(0,4).forEach((p,i)=>{const b=PRODBOX[p.name];if(b)CX.drawImage(b,SHELF_SPOTS[i][0],SHELF_SPOTS[i][1]);});
+}
+/* ---- 员工演出实体（调色板换色小人，只在办公室场景活动） ---- */
+const STAFF_SPR={};
+function bakeStaffSpr(role){
+  if(STAFF_SPR[role])return STAFF_SPR[role];
+  const pal={...PAL,r:CFG.STAFF_ROLES[role].color};   // 换衬衫颜色区分角色
+  const keys=["hero_down_0","hero_down_1","hero_up_0","hero_up_1","hero_side_0","hero_side_1"];
+  const o={};keys.forEach(k=>o[k]=bake(MAPS[k],pal));
+  STAFF_SPR[role]=o;return o;
+}
+const staffEnts=[];
+const EMP_WAYPTS=[[1.6*T,8.4*T,"shelf"],[10.6*T,14.3*T,"pack"],[7.5*T,13.4*T,"rug"],[3.5*T,11*T,"lounge"],[11.4*T,9*T,"wall"],[12.4*T,12.6*T,"front"]];
+function syncStaffEnts(){
+  for(let i=staffEnts.length-1;i>=0;i--)
+    if(!S.staff.some(s=>s.id===staffEnts[i].id))staffEnts.splice(i,1);
+  S.staff.forEach(s=>{
+    if(!staffEnts.some(e=>e.id===s.id))
+      staffEnts.push({id:s.id,role:s.role,x:rng(2,12)*T,y:rng(6,13)*T,
+        dir:"down",frame:0,ft:0,state:"idle",tx:0,ty:0,wait:rng(0.5,2)});
+  });
+}
+function stepWalker(w,dt){
+  const speed=36*dt;
+  if(w.state==="walk"){
+    const dx=w.tx-w.x,dy=w.ty-w.y,d=Math.hypot(dx,dy);
+    if(d<2){w.state="act";w.wait=rng(1.5,4);}
+    else{w.x+=dx/d*speed;w.y+=dy/d*speed;
+      w.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?"right":"left"):(dy>0?"down":"up");
+      w.ft+=dt;w.frame=Math.floor(w.ft/0.22)%2;}
+  }else{w.wait-=dt;if(w.wait<=0){
+    let wp;do{wp=EMP_WAYPTS[Math.floor(rngf()*EMP_WAYPTS.length)]}
+    while(Math.hypot(wp[0]-w.x,wp[1]-w.y)<8);
+    w.tx=wp[0];w.ty=wp[1];w.state="walk";}}
+}
+function drawWalker(w,sprs){
+  const key=w.state==="walk"
+    ?(w.dir==="up"?"hero_up":w.dir==="down"?"hero_down":"hero_side")+"_"+w.frame
+    :"hero_down_0";
+  const img=sprs[key];
+  if(w.dir==="left"){CX.save();CX.translate(Math.round(w.x)+8,Math.round(w.y)-8);CX.scale(-1,1);CX.drawImage(img,0,0);CX.restore();}
+  else CX.drawImage(img,Math.round(w.x)-8,Math.round(w.y)-8);
+}
+function drawStaff(dt){
+  syncStaffEnts();
+  staffEnts.forEach(e=>{stepWalker(e,dt);stepBubble(e,dt);drawWalker(e,bakeStaffSpr(e.role));drawBubble(e)});
+}
+
+/* ---- 员工头顶气泡（活人感：闲聊/抱怨随疲劳变化） ---- */
+const BUBBLE_LINES=[
+  {t:"老板好！",ok:s=>s.fatigue<40},
+  {t:"这单交给我！",ok:s=>s.role==="packer"&&s.fatigue<60},
+  {t:"售后包在我身上",ok:s=>s.role==="service"&&s.fatigue<60},
+  {t:"今天流量不错～",ok:s=>s.role==="operator"&&s.fatigue<60},
+  {t:"家人们扣个1！",ok:s=>s.role==="anchor"&&S.live.active},
+  {t:"好累啊…想歇一天",ok:s=>s.fatigue>=60},
+  {t:"快…要散架了…",ok:s=>s.fatigue>=85},
+  {t:"仓库要堆满啦",ok:()=>S.pending.length>CFG.PEND_SOFT},
+  {t:"这个月有奖金吗",ok:()=>rngf()<0.25},
+];
+function stepBubble(e,dt){
+  if(e.bubble){e.bubble.tl-=dt;if(e.bubble.tl<=0)e.bubble=null;return}
+  if(e.state!=="act"||rngf()>dt*0.22)return;      // 停留时低频冒泡
+  const pool=BUBBLE_LINES.filter(b=>b.ok(e));
+  if(pool.length)e.bubble={txt:pool[Math.floor(rngf()*pool.length)].t,tl:2.6};
+}
+function drawBubble(e){
+  if(!e.bubble)return;
+  CX.font="9px 'PingFang SC','Microsoft YaHei',sans-serif";
+  const w=Math.ceil(CX.measureText(e.bubble.txt).width)+10;
+  const x=clamp(e.x-w/2,2,W-w-2),y=e.y-38;
+  CX.fillStyle="rgba(255,255,255,.96)";CX.strokeStyle=PAL.k;CX.lineWidth=1;
+  CX.fillRect(x,y,w,14);CX.strokeRect(x+.5,y+.5,w-1,13);
+  CX.beginPath();CX.moveTo(e.x-3,y+14);CX.lineTo(e.x+3,y+14);CX.lineTo(e.x,y+18);
+  CX.closePath();CX.fill();
+  CX.fillStyle=PAL.k;CX.fillText(e.bubble.txt,x+5,y+11);
+}
+
+/* ---- 访客小人（事件 NPC 上门 / 门口顾客，换色烘焙） ---- */
+function bakeVisitorSpr(color){
+  const pal={...PAL,r:color};
+  const keys=["hero_down_0","hero_down_1","hero_side_0","hero_side_1"];
+  const o={};keys.forEach(k=>o[k]=bake(MAPS[k],pal));return o;
+}
+const CUST_SPR={};
+function drawCust(color,x,y){
+  if(!CUST_SPR[color])CUST_SPR[color]=bakeVisitorSpr(color);
+  CX.drawImage(CUST_SPR[color]["hero_down_0"],Math.round(x)-8,Math.round(y)-8);
+}
+/* 投流演出：投放期间门口有发传单小人挥舞传单 */
+function drawAdFlyer(){
+  if(!S.adDays||S.adDays<=0)return;
+  if(!CUST_SPR._fly)CUST_SPR._fly=bakeVisitorSpr("#e88f3c");
+  const x=10.5*T,y=5.15*T+Math.sin(performance.now()/280)*1.2;
+  CX.drawImage(CUST_SPR._fly["hero_side_"+(Math.floor(performance.now()/240)%2)],Math.round(x)-8,Math.round(y)-8);
+  const fy=Math.sin(performance.now()/180)*2;      // 手中传单摆动
+  CX.fillStyle="#f2d24b";CX.fillRect(Math.round(x+7),Math.round(y-15+fy),7,9);
+  CX.fillStyle="#d94f45";CX.fillRect(Math.round(x+8),Math.round(y-13+fy),5,2);
+}
+/* 门口顾客：售后积压/口碑差→怒气顾客；订单严重积压→门口排队 */
+function drawDoorCue(){
+  const angry=S.tickets.length>=3||S.rep<2.5, queue=S.pending.length>CFG.PEND_HARD;
+  if(!angry&&!queue)return;
+  const base=5.15*T,bob=Math.sin(performance.now()/300);
+  if(angry){drawCust("#d94f45",12.3*T,base+bob);
+    drawText3x5("!",12.3*T-3,base-28,"#d94f45");drawText3x5("!",12.3*T+3,base-28,"#d94f45");}
+  else{[11.2,12.2,13.2].forEach((cx,i)=>drawCust("#3f7fc1",cx*T,base+bob*(i%2?1:-1)));
+    drawText3x5("!",12.7*T-2,base-28,"#f2a24b")}
+}
+/* 事件 NPC 上门：从门口走入，到位后自动弹出事件面板 */
+const VISITOR_COLOR={influencer:"#d96aa0",clearance:"#e88f3c",logistics:"#3f7fc1",rival:"#5ba14e",
+  event101:"#f2d24b",fansday:"#d94f45",interview:"#8a5a34",audit:"#4a3b52",
+  meme:"#f2d24b",factory:"#6a7f9a",poach:"#b23a32",rumor:"#555f6a",guild:"#3f7fc1",doc:"#2f7a2f",
+  vc:"#7a4a9a",tax:"#2a3f5f",gala:"#d4a017",merger:"#1d1822",
+  promofest:"#e88f3c",wageup:"#b23a32",copycat:"#6a7f9a",surge:"#f2a24b",
+  blackout:"#555f6a",topstreamer:"#d96aa0",rentup:"#8a5a34",charity:"#2f7a2f",artclash:"#c95d8f"};
+
+/* ---- 事件人物对话形象（占位像素头像，后续可替换正式美术资产） ---- */
+const EVENT_FACE={  // 事件 id → 头像类型
+  influencer:"star",clearance:"buyer",logistics:"boss",rival:"boss",adfly:"plat",rat:"gov",
+  check:"gov",hotsearch:"media",negative:"buyer",vipvisit:"vip",doc:"gov",promofest:"plat",
+  wageup:"staff",copycat:"boss",surge:"media",blackout:"boss",topstreamer:"star",
+  rentup:"boss",charity:"gov",artclash:"staff",vc:"boss",tax:"gov",gala:"staff",merger:"boss",
+};
+const _faceCache={};
+function faceArt(key){   // 程序化生成 24x24 像素占位头像 → dataURL（带缓存）
+  if(_faceCache[key])return _faceCache[key];
+  const cv=document.createElement("canvas");cv.width=24;cv.height=24;
+  const g=cv.getContext("2d");
+  const P={  // 发型/肤色/配件按类型区分
+    staff:{hair:"#3a2a20",skin:"#f2c9a0",top:"#3f7fc1",acc:"cap"},
+    boss: {hair:"#2b2330",skin:"#f2c9a0",top:"#5a3a28",acc:"tie"},
+    gov:  {hair:"#222",    skin:"#f2c9a0",top:"#2f5a3a",acc:"hat"},
+    star: {hair:"#c95d8f",skin:"#fbd7b0",top:"#d96aa0",acc:"glasses"},
+    media:{hair:"#5a3a28",skin:"#f2c9a0",top:"#6a7f9a",acc:"card"},
+    plat: {hair:"#8a6a4a",skin:"#fbd7b0",top:"#e88f3c",acc:"headset"},
+    vip:  {hair:"#555",    skin:"#f2c9a0",top:"#f2a24b",acc:"chain"},
+    buyer:{hair:"#4a3020",skin:"#fbd7b0",top:"#5ba14e",acc:"none"},
+  }[key]||{hair:"#3a2a20",skin:"#f2c9a0",top:"#8a6a4a",acc:"none"};
+  g.fillStyle="#fffaf0";g.fillRect(0,0,24,24);           // 背景
+  g.fillStyle=P.skin;g.fillRect(6,6,12,13);              // 脸
+  g.fillRect(5,9,1,5);g.fillRect(18,9,1,5);              // 耳
+  g.fillStyle=P.hair;g.fillRect(5,3,14,5);g.fillRect(4,5,2,4);g.fillRect(18,5,2,4);  // 发
+  g.fillStyle="#2b2330";g.fillRect(8,11,2,2);g.fillRect(14,11,2,2);   // 眼
+  g.fillStyle="#c96a5a";g.fillRect(10,16,4,1);           // 嘴
+  g.fillStyle=P.top;g.fillRect(2,19,20,5);               // 肩
+  if(P.acc==="cap"){g.fillStyle="#2f5a3a";g.fillRect(5,3,14,2);g.fillRect(3,4,18,2)}
+  if(P.acc==="tie"){g.fillStyle="#d94f45";g.fillRect(11,19,2,4)}
+  if(P.acc==="glasses"){g.fillStyle="#2b2330";g.fillRect(7,11,4,3);g.fillRect(13,11,4,3);g.fillRect(11,12,2,1)}
+  if(P.acc==="card"){g.fillStyle="#f2d24b";g.fillRect(14,19,4,3)}
+  if(P.acc==="headset"){g.fillStyle="#2b2330";g.fillRect(3,10,2,5);g.fillRect(19,10,2,5);g.fillRect(3,8,18,1)}
+  if(P.acc==="chain"){g.fillStyle="#f2d24b";g.fillRect(10,19,1,1);g.fillRect(13,19,1,1);g.fillRect(11,20,2,2)}
+  return _faceCache[key]=cv.toDataURL()}
+const visitor={active:false,x:0,y:0,frame:0,ft:0,phase:"in",called:false,spr:null};
+function spawnVisitor(evId){
+  visitor.active=true;visitor.called=false;visitor.phase="in";visitor.ft=0;
+  visitor.x=13.2*T;visitor.y=0.6*T;
+  visitor.spr=bakeVisitorSpr(VISITOR_COLOR[evId]||"#8a5a34");
+}
+function stepVisitor(dt){
+  if(!visitor.active)return;
+  visitor.ft+=dt;visitor.frame=Math.floor(visitor.ft/0.22)%2;
+  if(visitor.phase==="in"){
+    const speed=34*dt,dx=VISITOR_TGT.x-visitor.x,dy=VISITOR_TGT.y-visitor.y,d=Math.hypot(dx,dy);
+    if(d<2){visitor.phase="wait";
+      if(!visitor.called){visitor.called=true;if(S.pendingEvent)UI.openDeck(S.pendingEvent)}}
+    else{visitor.x+=dx/d*speed;visitor.y+=dy/d*speed;}
+  }
+}
+const VISITOR_TGT={x:12.35*T,y:5.15*T};
+function drawVisitor(){
+  if(!visitor.active)return;
+  const key=visitor.phase==="in"?"hero_side_"+visitor.frame:"hero_down_0";
+  CX.drawImage(visitor.spr[key],Math.round(visitor.x)-8,Math.round(visitor.y)-8);
+}
+
+/* ---- 直播间弹幕 ---- */
+let danmaku=[],dmAcc=0;
+const DM_COLORS=["#d94f45","#f2d24b","#3f7fc1","#5ba14e","#d96aa0","#e88f3c"];
+function stepDanmaku(dt){
+  if(!(S&&S.live.active))return;          // 只有直播中才飘弹幕
+  dmAcc+=dt;
+  if(dmAcc>0.28){dmAcc=0;
+    danmaku.push({x:W+4,y:rng(56,132),vx:-rng(24,40),
+      color:DM_COLORS[Math.floor(rngf()*DM_COLORS.length)],heart:rngf()<0.3});}
+  danmaku=danmaku.filter(d=>{
+    d.x+=d.vx*dt;
+    if(d.heart)CX.drawImage(spr("ic_heart"),Math.round(d.x),Math.round(d.y));
+    else{CX.fillStyle=d.color;CX.fillRect(Math.round(d.x),Math.round(d.y),7,2);}
+    return d.x>-10});
+}
+
+/* ---- 直播间场景（竖屏：墙 3 行 / 地板 / 下半红毯舞台区） ---- */
+function drawStudio(dt){
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    if(r<3){const k=(r===0&&c===2)?"liveSign":"stWall";CX.drawImage(SPR[k],c*T,r*T);}
+    else CX.drawImage(r>=13?SPR.stCarpet:SPR.stFloor,c*T,r*T);
+  }
+  CX.drawImage(SPR.ringlight,3*T,2*T);
+  CX.drawImage(SPR.tripod,11*T,2*T);
+  /* 主角（与主播）带货演出：先画人再画桌，桌沿遮挡脚部形成站位层次 */
+  const t=performance.now()/1000,f=Math.floor(t/0.5)%2;
+  const by=4.7*T+Math.sin(t*3)*1.5,bx=7*T;
+  const anch=S&&S.staff.find(s=>s.role==="anchor");
+  if(anch)CX.drawImage(bakeStaffSpr("anchor")["hero_down_"+f],bx-18,Math.round(by));
+  CX.drawImage(spr("hero_down_"+f),bx,Math.round(by));
+  CX.drawImage(SPR.table,6*T,5.9*T);CX.drawImage(SPR.table,7*T,5.9*T);
+  const lp=S&&S.live.active?S.products.find(p=>p.id===S.live.pid):null;
+  if(lp&&PRODBOX[lp.name]){CX.drawImage(PRODBOX[lp.name],6*T+2,5.9*T-6);CX.drawImage(PRODBOX[lp.name],7*T+4,5.9*T-4);}
+  if(lp&&PRODBOX[lp.name])CX.drawImage(PRODBOX[lp.name],bx+13,Math.round(by)+6);
+  /* LIVE 灯牌 / 未开播遮罩 */
+  if(S&&S.live.active){
+    if(Math.floor(t*2)%2===0)drawText3x5("LIVE",2*T+5,7,"#ff6b5e");
+  }else{
+    CX.fillStyle="rgba(20,14,24,.45)";CX.fillRect(0,0,W,H);
+    if(Math.floor(t)%2===0)CX.drawImage(spr("ic_alert"),W/2-4,H/2-4);
+  }
+  stepDanmaku(dt);
+  drawFx(dt);
+}
+
+function drawFx(dt){
+  /* 漂浮金额 */
+  floaters=floaters.filter(f=>{f.life-=dt;f.y-=10*dt;
+    drawText3x5(f.text,Math.round(f.x),Math.round(f.y),f.color);
+    return f.life>0});
+  /* 气泡（pop 气泡带弹跳出场：先放大再回弹落定） */
+  bubbleT+=dt;
+  bubbles=bubbles.filter(b=>{b.life-=dt;
+    if(b.age!==undefined)b.age+=dt;
+    const bob=Math.sin(bubbleT*6)*1.5;
+    const bx=Math.round(b.x),by=Math.round(b.y+bob);
+    if(b.pop){const sc=1+Math.sin(Math.min((b.age||0)/0.35,1)*Math.PI)*0.55;
+      const s=spr(b.key),w=s.width/2;
+      CX.save();CX.translate(bx+w,by+w);CX.scale(sc,sc);CX.drawImage(s,-w,-w);CX.restore();}
+    else CX.drawImage(spr(b.key),bx,by);
+    return b.life>0});
+  /* SIM 产生的 fx 事件 */
+  if(S){for(const f of S.fx){
+    if(f.t==="cash"){const p=fxPos();
+      const txt=f.text||((f.v<0?"-¥":"+¥")+Math.abs(f.v));
+      floaters.push({text:txt,x:p.x-10,y:p.y,life:1.4,color:f.v<0?"#b23a32":"#2f7a2f"});}
+    else if(f.t==="heart")bubbles.push({key:"ic_heart",x:hero.x+2,y:hero.y-22,life:1.6});
+    else if(f.t==="alert")bubbles.push({key:"ic_alert",x:hero.x+2,y:hero.y-22,life:2.2});
+    else if(f.t==="box"){   // 仓管员补货动画：仓管员头顶冒箱 + 对应货架飘 +50
+      const wh=staffEnts.find(e=>e.role==="warehouse")||hero;
+      bubbles.push({key:"ic_box",x:wh.x+2,y:wh.y-22,life:1.8});
+      const idx=S.products.findIndex(q=>q.id===f.v&&q.devLeft<=0);
+      if(idx>=0&&idx<SHELF_SPOTS.length)
+        floaters.push({text:"+50",x:SHELF_SPOTS[idx][0],y:SHELF_SPOTS[idx][1]-8,life:1.5,color:"#2f7a2f"});
+    }
+    else if(f.t==="medal"){   // 成就解锁：金徽章弹跳升起 + 金色火花迸发
+      bubbles.push({key:"ic_medal",x:hero.x+2,y:hero.y-26,life:2.2,pop:true,age:0});
+      spawnSparks(hero.x+6,hero.y-22,16,"spark")}
+    else if(f.t==="build"){   // 产业落成：厂房图标升起 + 施工烟尘腾起
+      bubbles.push({key:"ic_fact",x:hero.x+2,y:hero.y-26,life:2.4,pop:true,age:0});
+      spawnSparks(hero.x+6,hero.y+4,14,"dust")}
+    else if(f.t==="confetti")spawnConfetti(f.v||0);   // 彩纸雨：升级/金牌/大客户
+  }S.fx=[];}
+  /* 售后常驻警告 */
+  if(S&&S.tickets.length&&Math.floor(bubbleT*2)%2===0)
+    CX.drawImage(spr("ic_alert"),Math.round(hero.x+4),Math.round(hero.y-24));
+  stepSparks(dt);drawSparks();
+}
+function draw(dt){
+  dt=dt||0;   // 防御：外部调用漏传 dt 会把 NaN 污染进动画状态
+  CX.clearRect(0,0,W,H);
+  if(SCENE.mode==="studio"){drawStudio(dt);stepConfetti(dt);drawConfetti();return}
+  /* 地形：正方形办公室——墙 4 行 + 大地板区（装修随等级变化） */
+  const olv=S?(S.officeLevel||1):1;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    if(r<4){let k="wall";
+      if(r===1&&c===2)k="poster";else if(r===1&&c===8)k="window";
+      else if(olv>=2&&r===1&&c===5)k="poster";
+      else if(olv>=3&&r===1&&c===10)k="trophy";
+      else if(r===3&&(c===12||c===13))k="door";
+      CX.drawImage(SPR[k],c*T,r*T);
+    }else CX.drawImage((r+c)%2?SPR.floorA:SPR.floorB,c*T,r*T);
+  }
+  /* 家具（主角之后的桌子稍后画以遮挡） */
+  if(olv>=2)CX.drawImage(SPR.plant,0,13*T);   // 升级后角落添绿植
+  CX.drawImage(SPR.rug,5*T,12*T);CX.drawImage(SPR.rug,6*T,12*T);
+  CX.drawImage(SPR.rug,5*T,13*T);CX.drawImage(SPR.rug,6*T,13*T);
+  CX.drawImage(SPR.plant,0,4*T);CX.drawImage(SPR.plant,14*T,4*T);
+  CX.drawImage(SPR.table,9*T,13*T);CX.drawImage(SPR.table,10*T,13*T);
+  CX.drawImage(SPR.shelf,1*T,5*T);
+  drawShelfBoxes();
+  drawPile();
+  /* 实体 */
+  if(S){stepHero(dt);stepCour(dt);}
+  stepVisitor(dt);
+  drawStaff(dt);
+  drawHero();drawCour();drawVisitor();drawAdFlyer();drawDoorCue();
+  /* 桌子遮挡坐姿 */
+  CX.drawImage(SPR.deskPC,6*T,7*T);CX.drawImage(SPR.desk,7*T,7*T);
+  (S.decor&&S.decor.placed||[]).forEach(d=>{   // 玩家布置的摆设物件（场景编辑系统）
+    const sp=SPR["dec_"+d.id];if(sp)CX.drawImage(sp,d.x*T,d.y*T);
+    if(UI._decorEdit){CX.strokeStyle="#f2d24b";CX.lineWidth=1;
+      CX.strokeRect(d.x*T+1.5,d.y*T+1.5,T-3,T-3)}});
+  drawFx(dt);
+  stepConfetti(dt);drawConfetti();
+}
+
+/* ---- 彩纸粒子雨（升级/金牌口碑/大客户庆祝） ---- */
+const CONF_COLORS=["#d94f45","#f2a24b","#f2d24b","#5ba14e","#3f7fc1","#d96aa0"];
+const confetti=[];
+function spawnConfetti(tier){
+  const n=tier>=5?70:tier>=1?46:26;   // 等级越高彩纸越盛大
+  for(let i=0;i<n;i++)confetti.push({
+    x:rng(10,W-10),y:rng(-60,-8),vx:rng(-9,9),vy:rng(26,52),
+    sway:rng(1.2,2.6),ph:rngf()*6.28,rot:rngf()*6.28,vr:rng(-4,4),
+    c:CONF_COLORS[Math.floor(rngf()*CONF_COLORS.length)],
+    s:Math.floor(rng(2,4)),life:rng(2.2,3.2)});
+}
+function stepConfetti(dt){
+  for(let i=confetti.length-1;i>=0;i--){const p=confetti[i];
+    p.ph+=p.sway*dt;p.x+=(p.vx+Math.sin(p.ph)*16)*dt;p.y+=p.vy*dt;p.rot+=p.vr*dt;p.life-=dt;
+    if(p.life<=0||p.y>H+8)confetti.splice(i,1)}
+}
+function drawConfetti(){
+  confetti.forEach(p=>{CX.save();CX.translate(Math.round(p.x),Math.round(p.y));
+    CX.rotate(p.rot);CX.globalAlpha=clamp(p.life,0,1);
+    CX.fillStyle=p.c;CX.fillRect(-p.s,-p.s/2,p.s*2,p.s);CX.restore()});
+  CX.globalAlpha=1;
+}
+
+/* ---- 徽章/产业演出粒子：金色火花（受重力散落） / 施工烟尘（上飘消散） ---- */
+const sparks=[];
+function spawnSparks(x,y,n,kind){
+  for(let i=0;i<n;i++)sparks.push({
+    x:x+rng(-5,5),y:y+rng(-2,2),
+    vx:kind==="dust"?rng(-14,14):rng(-30,30),
+    vy:kind==="dust"?rng(-30,-12):rng(-46,-10),
+    g:kind==="dust"?-8:52,               // 烟尘持续上飘，火花受重力下坠
+    s:kind==="dust"?rng(2,4):rng(1,2.5),
+    c:kind==="dust"?(rngf()<.5?"#cfc8bc":"#a89a88"):(rngf()<.5?"#f2d24b":"#f2a24b"),
+    life:kind==="dust"?rng(0.8,1.3):rng(0.5,0.9)});
+}
+function stepSparks(dt){
+  for(let i=sparks.length-1;i>=0;i--){const p=sparks[i];
+    p.vy+=p.g*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
+    if(p.life<=0)sparks.splice(i,1)}
+}
+function drawSparks(){
+  sparks.forEach(p=>{CX.globalAlpha=clamp(p.life*1.8,0,1);
+    CX.fillStyle=p.c;CX.fillRect(Math.round(p.x),Math.round(p.y),Math.ceil(p.s),Math.ceil(p.s))});
+  CX.globalAlpha=1;
+}
+
+/* ============================ UI ============================ */
+const UI={
+  toast(msg,type="info"){
+    AUD.play(type);                       // 音效随消息情绪起伏
+    const d=document.createElement("div");d.className="toast "+type;d.textContent=msg;
+    $("#toasts").appendChild(d);
+    setTimeout(()=>{d.style.opacity="0";d.style.transition="opacity .4s";
+      setTimeout(()=>d.remove(),400)},3200);
+    while($("#toasts").children.length>5)$("#toasts").firstChild.remove();
+  },
+  fx(t,v,text){if(S)S.fx.push({t,v,text})},
+  banner(t1,t2){$("#bnT1").textContent=t1;$("#bnT2").textContent=t2;
+    AUD.play("banner");
+    const b=$("#banner");b.classList.remove("on");void b.offsetWidth;b.classList.add("on");},
+  refresh(){
+    if(!S)return;
+    const stars="★".repeat(Math.round(S.rep))+"☆".repeat(5-Math.round(S.rep));
+    $("#hud").innerHTML=
+      `<div class="chip"><span class="lab">第</span>${S.day}<span class="lab">天/月${Math.ceil(S.day/30)}</span></div>
+       <div class="chip" style="${S.money<0?'background:#ffd9d4;color:#b23a32':''}"><span class="lab">资金</span>${fmtY(S.money)}</div>
+       <div class="chip star"><span class="lab">口碑</span>${stars} ${S.rep.toFixed(1)}</div>
+       <div class="chip"><span class="lab">粉丝</span>${Math.floor(S.fans)}</div>
+       <div class="chip ${S.pending.length>CFG.PEND_SOFT?'warn':''}"><span class="lab">待发货</span>${S.pending.length}</div>
+       ${S.adDays>0?`<div class="chip"><span class="lab">投流</span>${CFG.AD[S.adLevel].name} ${S.adDays}天</div>`:""}
+       ${S.live.active?`<div class="chip warn"><span class="lab">🔴直播</span>${S.live.daysLeft}天</div>`:S.live.cool>0?`<div class="chip"><span class="lab">直播冷却</span>${S.live.cool}天</div>`:""}
+       <div class="chip"><span class="lab">员工</span>${S.staff.length} 人</div>
+       <div class="chip"><span class="lab">称号</span>${CFG.LEVELS[S.level][1]}</div>
+       ${S.debt>0?`<div class="chip warn"><span class="lab">🏦欠款</span>${fmtY(S.debt)}</div>`:""}`;
+    const gg=CFG.GOALS[Math.min(S.goalIdx,CFG.GOALS.length-1)];
+    const pct=clamp(S.totalRevenue/gg.rev*100,0,100);
+    $("#goalTxt").textContent=gg.name+" "+fmtY(gg.rev);
+    $("#goalFill").style.width=pct+"%";
+    $("#goalPct").textContent=Math.floor(pct)+"%";
+    $("#bdgTicket").textContent=S.tickets.length;
+    $("#bdgTicket").classList.toggle("on",S.tickets.length>0);
+    $("#bdgShip").textContent=S.pending.length;
+    $("#bdgShip").classList.toggle("on",S.pending.length>CFG.PEND_SOFT);
+    const nx=CFG.OFFICE[S.officeLevel+1];
+    $("#bdgOffice").classList.toggle("on",!!nx&&S.money>=nx.need);
+    const bagN=S.items?Object.values(S.items).reduce((a,b)=>a+b,0):0;
+    $("#bdgItems").textContent=bagN;
+    $("#bdgItems").classList.toggle("on",bagN>0);
+    $("#bdgLoan").textContent="!";
+    $("#bdgLoan").classList.toggle("on",S.debt>0);
+  },
+  open(html){$("#panel").innerHTML=html;$("#panelLayer").classList.add("on")},
+  /* ---- 道具商店 ---- */
+  openItems(){
+    const I=CFG.ITEMS;
+    const dur=[];
+    if(S.itemFx.rocketDays>0)dur.push(`🚀 火箭投流 ×2.2（${S.itemFx.rocketDays} 天）`);
+    if(S.itemFx.insureDays>0)dur.push(`🎫 保险承保中（${S.itemFx.insureDays} 天）`);
+    if(S.flags.machine)dur.push("🔧 打包机已上线");
+    const bagKeys=Object.keys(S.items||{}).filter(k=>S.items[k]>0);
+    const bag=bagKeys.length?bagKeys.map(k=>{
+      const it=I[k];
+      const useBtn=k==="secret"
+        ?`<button class="pxbtn sm" style="background:#c2487e" onclick="UI.openItemTarget('${k}')">选用</button>`
+        :`<button class="pxbtn sm blue" onclick="UI.useItemUI('${k}')">使用</button>`;
+      return `<div class="progrow ticket" style="padding:6px;margin-bottom:4px;border-radius:8px">
+        <span style="flex:1"><b>${it.name}</b> ×${S.items[k]}</span>${useBtn}</div>`}).join("")
+      :`<div class="num" style="margin-bottom:6px">背包空空——道具是后期的策略筹码，关键时刻能救火。</div>`;
+    const shop=Object.keys(I).map(k=>{
+      const it=I[k],bought=it.once&&(S.items[k]>0||S.flags[k]);
+      return `<div class="progrow" style="margin-bottom:4px">
+        <span style="flex:1"><b>${it.name}</b><div class="num">${it.desc}</div></span>
+        <button class="pxbtn sm ${S.money>=it.cost&&!bought?"green":"gray"}" ${bought?"disabled":""} onclick="UI.buyItem('${k}')">${bought?"已拥有":fmtY(it.cost)}</button></div>`}).join("");
+    this.open(`<h2>🛒 道具商店</h2>
+      <div class="desc">大钱花在刀刃上：冲量、救火、口碑、产能，各取所需。</div>
+      ${dur.length?`<div class="progrow" style="color:var(--red2);font-weight:800;margin-bottom:6px">生效中：${dur.join("｜")}</div>`:""}
+      <h2 style="font-size:14px">🎒 背包</h2>${bag}
+      <h2 style="font-size:14px">🛍 购买</h2>${shop}
+      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`)},
+  buyItem(k){if(buyItem(k)){this.refresh();this.openItems()}else this.toast("资金不足","bad")},
+  useItemUI(k){const r=useItem(k);if(r)this.toast(r,"bad");this.refresh();this.openItems()},
+  openItemTarget(k){
+    const ps=S.products.filter(p=>p.devLeft<=0);
+    if(!ps.length){this.toast("没有在售商品","bad");return}
+    this.open(`<h2>🧪 爆款秘籍 → 选品</h2><div class="desc">目标商品热度直接拉满 100——配合直播选品就是 4 星完美档。</div>
+      ${ps.map(p=>`<div class="progrow" style="margin-bottom:4px">
+        <span style="flex:1"><b>${p.name}</b>（当前热度 ${Math.round(p.heat)}）</span>
+        <button class="pxbtn sm" style="background:#c2487e" onclick="UI.useSecret('${k}',${p.id})">就是它</button></div>`).join("")}
+      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.openItems()">返回</button></div>`)},
+  useSecret(k,pid){const r=useItem(k,pid);if(r)this.toast(r,"bad");this.refresh();this.openItems()},
+  close(){$("#panelLayer").classList.remove("on","decor");$("#panel").classList.remove("decor");
+    this._decSel=null;this._decorEdit=false;
+    $("#decorBar").classList.remove("on");
+    if(typeof visitor!=="undefined")visitor.active=false;   // 访客谈完离场
+    if(S)S.pendingEvent=null;},
+  isOpen(){return $("#panelLayer").classList.contains("on")},
+
+  /* ---- 决策面板 ---- */
+  openAd(){
+    const a=S.adDays>0?`<div class="desc">当前：${CFG.AD[S.adLevel].name}，剩余 ${S.adDays} 天</div>`:`<div class="desc">当前：自然流量</div>`;
+    let cards="";
+    for(let i=1;i<CFG.AD.length;i++){const ad=CFG.AD[i];
+      cards+=`<div class="card"><h3>${ad.name} <span class="tag">预付${ad.days}天</span></h3>
+        <div class="num">费用 ${fmtY(ad.cost)}<br>曝光 ×${ad.mult}/天</div>
+        <button class="pxbtn sm" onclick="UI.doAd(${i})" ${S.money<ad.cost?"disabled":""}>投放</button></div>`;}
+    cards+=`<div class="card" style="border-color:var(--blue)"><h3>📺 视频加速</h3>
+      <div class="num">看一条视频：<b>明日投流曝光 ×2</b>${S.adFx.adBoost>0?"<br><span style='color:var(--green)'>明天结算生效！</span>":""}</div>
+      <button class="pxbtn sm blue" onclick="UI.doAdBoost('adBoost')" ${S.adFx.adBoost>0?"disabled":""}>看视频解锁</button></div>`;
+    this.open(`<h2>📣 投流推广</h2>${a}<div class="desc">投流按「倍率」放大总曝光——盘子越大、回报越猛。转化率随商品热度上涨，先造爆款再砸钱最划算。</div>
+      <div class="cardrow">${cards}</div>
+      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);
+  },
+  doAd(i){if(buyAd(i)){this.refresh();this.openAd()}},
+  openShip(){
+    const cap=shipCapacity();
+    let wk="";for(let i=0;i<CFG.WORKER_MAX;i++)wk+=`<span style="font-size:18px">${i<S.workers?"🧑":"🧑‍🦱"}</span>`;
+    this.open(`<h2>📦 发货管理</h2>
+      <div class="desc">待发货 <b style="color:${S.pending.length>CFG.PEND_SOFT?'#b23a32':'#3a2a20'}">${S.pending.length}</b> 单 ｜ 当前产能 <b>${cap} 单/天</b> ｜ 日常人力成本 ${fmtY(dailyCost())}/天<br>
+      积压 >${CFG.PEND_SOFT} 单开始掉口碑，>${CFG.PEND_HARD} 单严重掉口碑！</div>
+      <div class="cardrow">
+        <div class="card"><h3>临时工 ${S.workers}/${CFG.WORKER_MAX}</h3><div class="num">每人 +${CFG.WORKER_SHIP} 单/天<br>日薪 ${fmtY(CFG.WORKER_PAY)}/人</div>
+          <div>${wk}</div>
+          <div style="display:flex;gap:6px">
+            <button class="pxbtn green sm" onclick="UI.doWorker(1)" ${S.workers>=CFG.WORKER_MAX?"disabled":""}>+ 招1人</button>
+            <button class="pxbtn gray sm" onclick="UI.doWorker(-1)" ${S.workers<=0?"disabled":""}>- 辞退</button></div></div>
+        <div class="card"><h3>云仓代发 <span class="tag">+${CFG.SAAS_SHIP}单/天</span></h3>
+          <div class="num">固定费用 ${fmtY(CFG.SAAS_PAY)}/天<br>状态：${S.saas?"<b style='color:#5ba14e'>已开通</b>":"未开通"}</div>
+          <button class="pxbtn sm ${S.saas?'gray':'blue'}" onclick="UI.doSaas()">${S.saas?"关闭云仓":"开通云仓"}</button></div>
+        <div class="card" style="border-color:var(--blue)"><h3>📺 视频加速</h3>
+          <div class="num">看一条视频：<b>明日每单收益 ×1.5</b>${S.adFx.revBoost>0?"<br><span style='color:var(--green)'>明天结算生效！</span>":""}</div>
+          <button class="pxbtn sm blue" onclick="UI.doAdBoost('revBoost')" ${S.adFx.revBoost>0?"disabled":""}>看视频解锁</button></div>
+      </div>
+      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);
+  },
+  doWorker(d){if(changeWorkers(d)){this.refresh();this.openShip()}},
+  doSaas(){toggleSaas();this.refresh();this.openShip()},
+  openTickets(){
+    let body="";
+    if(!S.tickets.length)body=`<div class="desc">暂无售后工单～口碑越好，工单越少。</div>`;
+    else S.tickets.forEach(t=>{
+      body+=`<div class="card ticket"><h3>${t.type} <span class="tag" style="background:${t.daysLeft<=1?'#d94f45':'#f2a24b'}">剩 ${t.daysLeft} 天</span></h3>
+        <div class="num">涉及：${t.product} ｜ 价值 ${fmtY(t.price)}<br>逾期将自动退款并重创口碑</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="pxbtn green sm" onclick="UI.doTicket(${t.id},'refund')">全额退款</button>
+          <button class="pxbtn blue sm" onclick="UI.doTicket(${t.id},'resend')">补发换货</button>
+          <button class="pxbtn sm" style="background:#9b8f7a" onclick="UI.doTicket(${t.id},'deny')">拒绝</button>
+        </div></div>`;});
+    this.open(`<h2>🛠 售后处理</h2>
+      <div class="desc">退款保口碑但亏钱；补发折中；拒绝保钱但口碑大掉（还掉粉）。</div>${body}
+      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);
+  },
+  doTicket(id,act){if(resolveTicket(id,act)){this.refresh();this.openTickets()}},
+  openShop(){
+    let cats="";
+    CFG.CATS.forEach((c,i)=>{
+      if(c.cond&&!c.cond(S)){   // 梯队未解锁：显示条件提示
+        cats+=`<div class="card" style="opacity:.65"><h3>🔒 ${c.name}</h3>
+          <div class="num">研发费 ${fmtY(c.dev)} · 3天<br><span style="color:var(--red2)">${c.hint}</span></div></div>`;return}
+      const repN=S.products.filter(p=>p.name===c.name).length,fee=devFee(c);
+      cats+=`<div class="card"><h3 style="color:${c.color}">${c.name}${repN?` <span class="tag">同款×${repN}</span>`:""}</h3>
+        <div class="num">研发费 ${fmtY(fee)}${repN?` <span style="color:var(--red)">内卷 ×${(1+repN*0.6).toFixed(1)}</span>`:""} · 3天<br>成本¥${c.cost} → 售价¥${c.price}<br>初始热度 ${c.heat}</div>
+        <button class="pxbtn sm" onclick="UI.openDevPlan(${i})" ${S.money<fee?"disabled":""}>研发</button></div>`;});
+    /* 隐藏品类：锁定的只给条件提示，解锁后加入研发列表 */
+    let hcats="";
+    CFG.HIDDEN.forEach((c,i)=>{
+      const fee=devFee(c);
+      if(c.cond(S))hcats+=`<div class="card" style="border-color:${c.color}"><h3 style="color:${c.color}">✨${c.name}</h3>
+        <div class="num">研发费 ${fmtY(fee)} · 3天<br>成本¥${c.cost} → 售价¥${c.price}<br>初始热度 ${c.heat}（高风险高客单）</div>
+        <button class="pxbtn sm" onclick="UI.openDevPlan(${i},true)" ${S.money<fee?"disabled":""}>研发</button></div>`;
+      else hcats+=`<div class="card" style="opacity:.6"><h3>🔒 ？？？</h3>
+        <div class="num">隐藏品类<br>${c.hint}</div></div>`;});
+    let own="";
+    if(!S.products.length)own=`<div class="desc">暂无在售商品！先研发或等待新品上架。</div>`;
+    S.products.forEach(p=>{
+      const dev=p.devLeft>0,art=p.artLeft>0;
+      const dsg=S.staff.find(s=>s.role==="designer");
+      const rs=Math.ceil(p.cost*CFG.RESTOCK_QTY*(S.hikeDays>0?1.5:1));
+      own+=`<div class="card"><h3 style="color:${p.color}">${p.name} ${dev?`<span class="tag">研发中 ${p.devLeft}天</span>`:art?`<span class="tag" style="background:#c95d8f">🎨 素材中 ${p.artLeft}天${dsg?"（"+dsg.name+"）":"（自己做图）"}</span>`:""}</h3>
+        <div class="progrow">库存<div class="mbar"><i style="width:${clamp(p.stock/100*100,0,100)}%"></i></div>${p.stock}</div>
+        <div class="progrow">热度<div class="mbar"><i class="heat" style="width:${clamp(p.heat/60*100,0,100)}%"></i></div>${Math.round(p.heat)}</div>
+        <div style="display:flex;gap:6px">
+          ${dev||art?`<button class="pxbtn sm blue" onclick="UI.doAdRush(${p.id})" ${(p.devLeft>1||p.artLeft>1)?"":"disabled"}>📺 冲刺 -1天</button>`
+            :`<button class="pxbtn green sm" onclick="UI.doRestock(${p.id})" ${S.money<rs?"disabled":""}>补货+50 (${fmtY(rs)})</button>
+          <button class="pxbtn sm" style="background:#9b8f7a" onclick="UI.doDelist(${p.id})">下架</button>`}
+        </div></div>`;});
+    this.open(`<h2>🆕 商品与研发</h2>
+      <div class="desc">在售上限 ${CFG.MAX_PRODUCTS} 个（超出自动淘汰热度最低者）｜<b>品类按梯队解锁</b>：累计营业额/称号达标才能研发下一档 ｜热度自然退烧，<b>卖得越火爆退烧越快</b>——持续上新、拉开品类梯度才是长胜之道！</div>
+      <h2 style="font-size:14px">🧪 研发新品</h2><div class="cardrow">${cats}${hcats}</div>
+      <h2 style="font-size:14px">🛒 在售商品</h2><div class="cardrow">${own}</div>
+      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);
+  },
+  doDev(i,hid){if(devProduct(i,null,hid)){this.refresh();this.openShop()}},
+  /* 供应链开发方案：三步深度决策（供应商/品控/预热） */
+  openDevPlan(ci,hid){
+    const c=(hid?CFG.HIDDEN:CFG.CATS)[ci],D=CFG.DEV_OPTS;
+    if(!this.devSel||this.devSel.ci!==ci||!!this.devSel.hid!==!!hid)this.devSel={ci,hid,supp:0,qc:0,pre:0};
+    const s=this.devSel,repN=S.products.filter(p=>p.name===c.name).length;
+    const grp=(title,items,key,hint)=>`<h2 style="font-size:14px">${title}</h2>
+      <div class="desc">${hint}</div>
+      ${items.map((o,ix)=>`<div class="progrow" style="gap:6px;margin-bottom:2px">
+        <button class="pxbtn sm ${s[key]===ix?"":"gray"}" onclick="UI.selDev('${key}',${ix})">${o.name}${s[key]===ix?" ✓":""}</button>
+        <span class="num" style="flex:1">${o.desc}</span></div>`).join("")}`;
+    const devCost=Math.ceil(devFee(c)*D.qc[s.qc].costMult),preCost=D.pre[s.pre].cost;
+    const unitCost=Math.round(c.cost*D.supp[s.supp].costMult);
+    this.open(`<h2>🧪「${c.name}」开发方案${hid?' <span class="tag">隐藏品类</span>':""}${repN?` <span class="tag" style="background:var(--red)">内卷 ×${(1+repN*0.6).toFixed(1)}</span>`:""}</h2>
+      <div class="desc">${hid?"高风险高客单的隐藏赛道：":"三步决策决定这款产品的基因："}品质换转化，品控换口碑，预热换声势。</div>
+      ${grp("🏭 供应商",D.supp,"supp","决定进货成本与品质（影响转化/售后率）")}
+      ${grp("🔍 品控标准",D.qc,"qc","出厂前检查多严？")}
+      ${grp("📣 上市预热",D.pre,"pre","首发声势")}
+      <div class="progrow" style="margin:8px 0">💰 研发费 <b>${fmtY(devCost+preCost)}</b>（含品控/预热）｜进货价 ¥${unitCost} → 售价 ¥${c.price}</div>
+      <div class="panelclose"><button class="pxbtn green" onclick="UI.doDevStart()" ${S.money<devCost+preCost?"disabled":""}>▶ 立项研发（3 天上架）</button>
+      <button class="pxbtn gray sm" onclick="UI.openShop()">返回</button></div>`);
+  },
+  selDev(k,ix){this.devSel[k]=ix;this.openDevPlan(this.devSel.ci,this.devSel.hid)},
+  doDevStart(){const s=this.devSel;if(devProduct(s.ci,{supp:s.supp,qc:s.qc,pre:s.pre},s.hid)){
+    this.refresh();this.openShop()}},
+  doRestock(id){if(restock(id)){this.refresh();this.openShop()}},
+  doDelist(id){if(delist(id)){this.refresh();this.openShop()}},
+
+  /* ---- 直播带货（选品 → 风格 → 开播） ---- */
+  _lp:null,_lsty:null,
+  selLive(pid){this._lp=pid;this.openLive()},
+  selStyle(k){this._lsty=k;this.openLive()},
+  openLive(){
+    if(S.fans<CFG.LIVE.UNLOCK_FANS){
+      this.open(`<h2>🔴 直播带货</h2><div class="desc">粉丝达到 <b>${CFG.LIVE.UNLOCK_FANS}</b> 后解锁直播间（当前 ${Math.floor(S.fans)}）。快去涨粉吧！</div>
+      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);return}
+    if(S.live.active){
+      const p=S.products.find(x=>x.id===S.live.pid);
+      const st=CFG.STYLES[S.live.style]||CFG.STYLES.hawking, fit=S.live.fit;
+      this.open(`<h2>🔴 直播中</h2>
+        <div class="desc">主推「${p?p.name:"？"}」｜ ${st.icon} ${st.name} ｜ 剩余 <b>${S.live.daysLeft}</b> 天<br>
+        选品评价：<span style="color:#e88f3c">${fit?"★".repeat(fit.stars)+"☆".repeat(4-fit.stars):""}</span> ${fit?fit.tag:""}<br>
+        效果：曝光 +${CFG.LIVE.EXPO+(st.expo||0)+staffAnchorBonus()}/天 ｜ 主推热度 +${CFG.LIVE.HEAT}/天 ｜ 转化率 +${((CFG.LIVE.CONV+(fit?fit.conv:0)+st.conv)*100).toFixed(1)}% ｜ 场地 ${fmtY(CFG.LIVE.PER_DAY+(st.cost||0))}/天<br>
+        提示：点击「🎬 直播间」按钮可切到直播间看弹幕！</div>
+        <div class="panelclose"><button class="pxbtn sm" onclick="UI.doEndLive()">提前收播</button>
+        <button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);return}
+    if(S.live.cool>0){
+      this.open(`<h2>🔴 直播带货</h2><div class="desc">设备冷却中，${S.live.cool} 天后可再次开播。</div>
+      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);return}
+    const sellable=S.products.filter(p=>p.devLeft<=0&&!p.artLeft);
+    if(!sellable.some(p=>p.id===this._lp))this._lp=sellable.length?sellable[0].id:null;
+    if(!CFG.STYLES[this._lsty])this._lsty="hawking";
+    let cards="";
+    sellable.forEach(p=>{
+      const fit=liveFit(p),sel=p.id===this._lp;
+      cards+=`<div class="card" style="${sel?"border-color:var(--gold);background:#fff6df":"opacity:.82"};cursor:pointer" onclick="UI.selLive(${p.id})">
+        <h3 style="color:${p.color}">${p.name} ${sel?"✅":""}</h3>
+        <div class="num">热度 ${Math.round(p.heat)} ｜ 库存 ${p.stock}<br>
+        <span style="color:#e88f3c">${"★".repeat(fit.stars)}${"☆".repeat(4-fit.stars)}</span> ${fit.tag}</div></div>`;});
+    if(!cards)cards=`<div class="desc">暂无在售商品可主推，先去研发新品吧。</div>`;
+    let styles="";
+    Object.entries(CFG.STYLES).forEach(([k,st])=>{
+      const sel=k===this._lsty;
+      styles+=`<div class="card" style="${sel?"border-color:var(--gold);background:#fff6df":"opacity:.82"};cursor:pointer" onclick="UI.selStyle('${k}')">
+        <h3>${st.icon} ${st.name} ${sel?"✅":""}</h3><div class="num">${st.desc}</div></div>`;});
+    this.open(`<h2>🔴 直播带货 · 选品</h2>
+      <div class="desc"><b>第①步</b>：点选主推商品（适配度越高效果越好，⚠缺货会翻车砸口碑）<br>
+      开播 ${CFG.LIVE.DAYS} 天 ｜ 预付 ${fmtY(CFG.LIVE.COST)} + 场地费/天 ｜ 直播中随机：弹幕爆炸 / 礼物打赏 / 口误翻车</div>
+      <div class="cardrow">${cards}</div>
+      <h2 style="font-size:14px">第②步：选开播风格</h2>
+      <div class="cardrow">${styles}</div>
+      <div class="panelclose"><button class="pxbtn" onclick="UI.doLiveStart()" ${S.money<CFG.LIVE.COST||!this._lp?"disabled":""}>🔴 开播！（${fmtY(CFG.LIVE.COST)}）</button>
+      <button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);
+  },
+  doLiveStart(){
+    if(this._lp==null){UI.toast("先选一个主推商品","bad");return}
+    if(startLive(this._lp,this._lsty)){this._lp=null;this._lsty=null;this.refresh();this.close()}},
+  doEndLive(){endLive(true);this.refresh();this.openLive()},
+
+  /* ---- 员工养成 ---- */
+  openStaff(){
+    let hire="";
+    Object.entries(CFG.STAFF_ROLES).forEach(([k,r])=>{
+      const maxed=(k==="anchor"||k==="warehouse"||k==="designer")&&S.staff.some(s=>s.role===k);
+      hire+=`<div class="card"><h3 style="color:${r.color}">${r.name}</h3>
+        <div class="num">${r.desc}<br>签约费 ${fmtY(r.hire)} · 日薪 ${fmtY(r.wage)}</div>
+        <button class="pxbtn sm" onclick="UI.doHire('${k}')" ${S.money<r.hire||maxed?"disabled":""}>${maxed?"已满编":"招聘"}</button></div>`;});
+    let list="";
+    if(!S.staff.length)list=`<div class="desc">还没有正式员工。临时工便宜但不会成长，正式员工越干越强！</div>`;
+    S.staff.forEach(s=>{
+      const r=CFG.STAFF_ROLES[s.role];
+      const fat=clamp(s.fatigue||0,0,100),resting=!!s.resting;
+      const fatBg=fat>=CFG.FATIGUE.HARD?"var(--red)":fat>=CFG.FATIGUE.SOFT?"#e8a33c":"var(--green)";
+      list+=`<div class="card"><h3 style="color:${r.color}">${s.name} · ${r.name} <span class="tag">Lv${s.level}</span>${resting?'<span class="tag" style="background:#9b8f7a">🛌 休息中</span>':fat>=CFG.FATIGUE.HARD?'<span class="tag" style="background:var(--red)">快累垮了</span>':fat>=CFG.FATIGUE.SOFT?'<span class="tag" style="background:#e8a33c">有点累</span>':""}</h3>
+        <div class="progrow">经验<div class="mbar"><i style="width:${s.level>=5?100:clamp(s.exp/(s.level*CFG.LEVEL_EXP)*100,0,100)}%"></i></div>${s.level>=5?"MAX":s.exp+"/"+s.level*CFG.LEVEL_EXP}</div>
+        <div class="progrow">疲劳<div class="mbar"><i style="width:${fat}%;background:${fatBg}"></i></div>${fat}</div>
+        <div class="num">${staffEffect(s)} ｜ 日薪 ${fmtY(r.wage)}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="pxbtn green sm" onclick="UI.doTrain(${s.id})" ${s.level>=5||S.money<CFG.TRAIN_COST||resting?"disabled":""}>培训(${fmtY(CFG.TRAIN_COST)})</button>
+          <button class="pxbtn blue sm" onclick="UI.doRest(${s.id})" ${resting?"disabled":""}>歇一天</button>
+          <button class="pxbtn sm" style="background:#9b8f7a" onclick="UI.doFire(${s.id})">解雇</button></div></div>`;});
+    this.open(`<h2>👥 员工养成</h2>
+      <div class="desc">在编 ${S.staff.length} 人 ｜ 工资支出 ${fmtY(staffWages())}/天 ｜ 打包产能加成 +${staffPackBonus()} 单/天<br>
+      员工每天积累经验自动升级（Lv5 封顶），也会积累疲劳：≥60 效率 ×0.75、≥85 ×0.4，满 100 强制罢工一天。「歇一天」可大幅恢复，但当天无产出也不涨经验。</div>
+      <h2 style="font-size:14px">🧑‍💼 招聘</h2><div class="cardrow">${hire}</div>
+      <h2 style="font-size:14px">📋 在编员工</h2><div class="cardrow">${list}</div>
+      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);
+  },
+  doHire(r){if(hireStaff(r)){this.refresh();this.openStaff()}},
+  doFire(id){if(fireStaff(id)){this.refresh();this.openStaff()}},
+  doTrain(id){if(trainStaff(id)){this.refresh();this.openStaff()}},
+  doRest(id){if(restStaff(id)){this.refresh();this.openStaff()}},
+
+  /* ---- 办公室升级 · 产业投资 · 成就墙 ---- */
+  openOffice(){
+    const lv=S.officeLevel,cur=CFG.OFFICE[lv],nx=CFG.OFFICE[lv+1];
+    const fx=l=>(l.pack?"产能 +"+l.pack+" 单/天":"")+(l.expo?(l.pack?"、":"")+"曝光 +"+l.expo+"/天":"")||"暂无加成";
+    let obody;
+    if(nx){
+      const can=S.money>=nx.need;
+      obody=`<div class="desc">当前：<b>${cur.name}</b>（${fx(cur)}）<br>
+        下一级：<b style="color:var(--red)">${nx.name}</b> — ${fx(nx)}<br>
+        升级费 ${fmtY(nx.cost)} ｜ 要求资金储备 ≥ <b>${fmtY(nx.need)}</b>（当前 ${fmtY(Math.floor(S.money))}）</div>
+        <div class="panelclose"><button class="pxbtn" onclick="UI.doUpgradeOffice()" ${can?"":"disabled"}>🏠 立即升级（${fmtY(nx.cost)}）</button></div>`;
+    }else{
+      obody=`<div class="desc">当前已是最高级：<b>${cur.name}</b>（${fx(cur)}）。小店蒸蒸日上，老板名利双收！</div>`;
+    }
+    /* 产业投资：大额资金出口，永久加成 + 日维护费 */
+    let fbody="";
+    for(const k in CFG.FACIL){const f=CFG.FACIL[k],own=S.fac&&S.fac[k];
+      fbody+=`<div class="card"><h3>${f.name} ${own?'<span class="tag tag-lit">已投资</span>':""}</h3>
+        <div class="num">${f.desc}<br>投入 ${fmtY(f.cost)} ｜ 维护 ${fmtY(f.upkeep)}/天</div>
+        ${own?"":`<button class="pxbtn sm ${S.money>=f.cost?"":"gray"}" onclick="UI.buyFacil('${k}')" ${S.money>=f.cost?"":"disabled"}>投资（${fmtY(f.cost)}）</button>`}</div>`}
+    /* 成就墙：徽章收藏 */
+    const tags=CFG.ACHV.map(a=>S.achv&&S.achv[a.id]
+      ?`<span class="tag tag-lit" title="${a.desc}">🏅${a.name}</span>`
+      :`<span style="opacity:.45;font-size:10px" title="${a.desc}">🔒${a.name}</span>`).join(" ");
+    this.open(`<h2>🏠 升级 · 产业 · 成就</h2>
+      ${obody}
+      <h2 style="font-size:14px;margin-top:8px">🏭 产业投资（长期资产）</h2>
+      <div class="desc">一次投入终身受益，但每天要付维护费——后期资金的最佳去向。</div>
+      <div class="cardrow">${fbody}</div>
+      <h2 style="font-size:14px;margin-top:8px">🏅 成就墙（${Object.keys(S.achv||{}).length}/${CFG.ACHV.length}）</h2>
+      <div class="desc">${tags}</div>
+      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button>
+        <button class="pxbtn sm" style="background:#8a5a34;margin-left:8px" onclick="if(confirm('结束经营并查看最终结算？此操作不可撤销。'))UI.openEnd()">📦 结束经营</button></div>`);
+  },
+  /* ---- 场景编辑：摆设物件系统 ---- */
+  _decSel:null,
+  openDecor(){
+    const card=k=>{const d=CFG.DECOR[k],n=(S.decor.owned[k]||0);
+      const placed=(S.decor.placed||[]).filter(p=>p.id===k).length;
+      return `<div class="card" style="${this._decSel===k?"border-color:var(--red);background:#fff2f0":""}">
+        <h3>${d.name} ${n?`<span class="tag">拥有 ×${n}${placed?` 在场 ×${placed}`:""}</span>`:'<span style="opacity:.45;font-size:10px">未拥有</span>'}</h3>
+        <div class="num">${d.desc}</div>
+        ${n?`<button class="pxbtn sm ${this._decSel===k?"":"green"}" onclick="UI.doSelectDecor('${k}')">${this._decSel===k?"✓ 点击场景放置":"选中放置"}</button>`:
+        d.ad?`<button class="pxbtn sm blue" onclick="UI.doAdDecor('${k}')">📺 看视频解锁</button>`:
+        `<button class="pxbtn sm ${S.money>=d.cost?"":"gray"}" onclick="UI.doBuyDecor('${k}')" ${S.money>=d.cost?"":"disabled"}>购买 ${fmtY(d.cost)}</button>`}</div>`};
+    let basic="",ads="";
+    for(const k in CFG.DECOR){if(CFG.DECOR[k].ad)ads+=card(k);else basic+=card(k)}
+    const busy=S.decor.placed.length?`已放置 ${S.decor.placed.length} 件物件——点场景里的金色框可收回到仓库`:"还没布置任何物件";
+    this.open(`<h2>🎨 场景布置</h2>
+      <div class="desc">选中物件后<b>点击场景地板</b>放置；点击已放置物件（金色框）收回。摆设提供小幅永久加成。</div>
+      <div style="font-size:12px;font-weight:800;color:#6a5038;margin-bottom:6px">🛒 基础款（金币购买）</div>
+      <div class="cardrow">${basic}</div>
+      <div style="font-size:12px;font-weight:800;color:var(--blue);margin-bottom:6px">📺 视频专享（看视频免费解锁）</div>
+      <div class="cardrow">${ads}</div>
+      <div class="desc">${busy}</div>
+      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">完成布置</button></div>`);
+    $("#panelLayer").classList.add("decor");$("#panel").classList.add("decor");   // 编辑模式：面板停靠底部，露出场景可点
+    $("#decorBar").classList.remove("on");
+    this._decorEdit=true;
+  },
+  doSelectDecor(k){
+    this._decSel=this._decSel===k?null:k;
+    if(this._decSel){   // 进入放置模式：自动关面板，露出完整场景直接点地放置
+      $("#panelLayer").classList.remove("on","decor");$("#panel").classList.remove("decor");
+      this._decorEdit=true;$("#decorBar").classList.add("on");
+      UI.toast(`已选中「${CFG.DECOR[k].name}」，点击办公室地板放置`,"info");
+    }else this.openDecor();
+  },
+  doBuyDecor(k){const d=CFG.DECOR[k];
+    if(!d||S.money<d.cost)return;
+    S.money-=d.cost;S.decor.owned[k]=(S.decor.owned[k]||0)+1;
+    UI.toast(`🛒 购入「${d.name}」！去场景里挑个位置放下吧`,"good");AUD.play("coin");
+    diary(`购入摆设「${d.name}」`,S.day);this.refresh();this.openDecor()},
+  /* ---- 激励视频占位：3 秒模拟广告后执行回调（接真实 SDK 时只改此函数体） ---- */
+  _watchAd(label,done){
+    this.open(`<h2>📺 激励广告</h2>
+      <div class="desc">广告播放中… <b id="adNum">3</b> 秒后可领取「${label}」</div>
+      <div style="text-align:center;font-size:34px;padding:16px 0">📺☕️🎬</div>
+      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">跳过（不领奖）</button></div>`);
+    let n=3;clearInterval(this._adTimer);
+    this._adTimer=setInterval(()=>{n--;
+      const el=document.getElementById("adNum");
+      if(n>0&&el)el.textContent=n;
+      else{clearInterval(this._adTimer);this.close();done&&done()}},1000)},
+  doAdDecor(k){const d=CFG.DECOR[k];if(!d||S.decor.owned[k])return;
+    this._watchAd(d.name,()=>{
+      S.decor.owned[k]=(S.decor.owned[k]||0)+1;
+      UI.toast(`🎁 广告奖励：「${d.name}」已解锁！`,"good");
+      diary(`观看广告解锁摆设「${d.name}」`,S.day);this.openDecor()})},
+  /* ---- 激励视频位 1/2：明日投流曝光 ×2 ／ 明日每单收益 ×1.5 ---- */
+  doAdBoost(k){if(!S.adFx||S.adFx[k]>0)return;
+    const label=k==="adBoost"?"明日投流曝光 ×2":"明日每单收益 ×1.5";
+    this._watchAd(label,()=>{S.adFx[k]=1;AUD.play("coin");
+      UI.toast(`🎁 广告奖励：${label}（明天结算生效）`,"good");
+      diary(`看广告获得增益「${label}」`,S.day);this.save()})},
+  /* ---- 激励视频位 3：研发/素材冲刺 -1 天 ---- */
+  doAdRush(pid){const p=S.products.find(x=>x.id===pid);
+    if(!p||!((p.devLeft>1)||(p.artLeft>1)))return;
+    this._watchAd("研发进度 -1 天",()=>{
+      if(p.devLeft>1)p.devLeft--;else if(p.artLeft>1)p.artLeft--;
+      UI.toast(`🚀 「${p.name}」冲刺成功，进度 -1 天！`,"good");AUD.play("coin");
+      this.refresh();this.save();this.openShop()})},
+  /* ---- 激励视频位 4：破产急救（每天一次） ---- */
+  openBailout(){
+    const amt=loanLimit();
+    this.open(`<h2>🆘 资金链断裂！</h2>
+      <div class="desc">账户已跌破破产线（${fmtY(CFG.BANKRUPT)}）。看一条视频，平台紧急注资 <b style="color:var(--green)">${fmtY(amt)}</b> 帮你续命——<b>每天限一次</b>，错过今天就直接破产清算。</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="pxbtn blue" onclick="UI.doBailout()">📺 看视频自救</button>
+        <button class="pxbtn gray" onclick="UI.openEnd(true)">接受破产结局</button></div>`)},
+  doBailout(){this._watchAd("平台应急金",()=>{
+    const amt=loanLimit();S.money+=amt;AUD.play("coin");
+    UI.toast(`🆘 平台应急金到账 ${fmtY(amt)}，活下去！`,"good");
+    diary("资金链断裂，看广告获得平台应急金续命",S.day);this.refresh();this.save()})},
+  decorTap(x,y){
+    /* 场景编辑点击：有选中→放置；无选中点到已放置物件→收回 */
+    const T2=16,blocked=new Set(["5,12","6,12","5,13","6,13","0,4","14,4","0,13","9,13","10,13","1,5","6,7","7,7"]);
+    if(x<0||x>14||y<4||y>14)return;   // 越界/墙面不可放
+    const key=x+","+y;
+    if(this._decSel){
+      if((blocked.has(key)))return UI.toast("这里放不了，选块空地板","bad");
+      if(S.decor.placed.some(p=>p.x===x&&p.y===y))return UI.toast("这个位置已经有物件了","bad");
+      const own=S.decor.owned[this._decSel]||0;
+      if(!own)return UI.toast("还没有这个物件，先在下方购买或看广告解锁","bad");
+      if(S.decor.placed.filter(p=>p.id===this._decSel).length>=own)return UI.toast("拥有数量已全部在场，先收一件或再买一件","bad");
+      S.decor.placed.push({id:this._decSel,x,y});
+      UI.toast(`🪴 「${CFG.DECOR[this._decSel].name}」放置成功！`,"good");AUD.play("coin");
+      this.refresh();this.save();
+      const left=(S.decor.owned[this._decSel]||0)-S.decor.placed.filter(p=>p.id===this._decSel).length;
+      if(left<=0)this._decSel=null;   // 仓库没存货了自动取消选中，悬浮条保留可继续收回
+    }else{
+      const i=S.decor.placed.findIndex(p=>p.x===x&&p.y===y);
+      if(i>=0){const rm=S.decor.placed.splice(i,1)[0];
+        UI.toast(`「${CFG.DECOR[rm.id].name}」已收回仓库`,"info");AUD.play("click");this.refresh();this.save()}
+    }
+  },
+  buyFacil(k){
+    const f=CFG.FACIL[k];
+    if(!f||S.fac[k]||S.money<f.cost)return;
+    S.money-=f.cost;S.fac[k]=true;
+    diary(`投资了产业「${f.name}」，每天付 ${fmtY(f.upkeep)} 维护费`);
+    UI.toast(`🏭 产业落成：「${f.name}」！${f.desc}`,"good");
+    UI.fx("build");UI.fx("confetti",2);   // 施工烟尘 + 厂房升起 + 小型彩纸
+    this.refresh();this.openOffice();
+  },
+  /* ---- 银行贷款 ---- */
+  openLoan(){
+    const lim=loanLimit(),debt=S.debt,per=Math.round(debt*CFG.LOAN.RATE),left=Math.max(0,lim-debt);
+    const step=CFG.LOAN.STEP;
+    this.open(`<h2>🏦 银行贷款</h2>
+      <div class="desc">创业缺钱？银行愿意拉你一把——但利息每天 <b>1.5% 利滚利</b>，救急不救穷。<br>
+        欠款 <b style="color:var(--red)">${fmtY(debt)}</b>（每日利息 ${fmtY(per)}）｜ 总额度 <b>${fmtY(lim)}</b>（随称号提升）｜ 剩余额度 <b>${fmtY(left)}</b></div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
+        <button class="pxbtn sm" onclick="UI.doBorrow(1)" ${left>=step?"":"disabled"}>借入 ${fmtY(step)}${left<step?"（额度不足）":""}</button>
+        <button class="pxbtn sm" onclick="UI.doBorrow(2)" ${left>=step*2?"":"disabled"}>借入 ${fmtY(step*2)}${left<step*2?"（额度不足）":""}</button>
+        <button class="pxbtn sm green" onclick="UI.doRepay(${step})" ${debt>0&&S.money>=Math.min(step,debt)?"":"disabled"}>还款 ${fmtY(Math.min(step,debt))}${debt<=0?"（无欠款）":S.money<Math.min(step,debt)?"（资金不足）":""}</button>
+        <button class="pxbtn sm green" onclick="UI.doRepay(${Math.ceil(debt)})" ${debt>0&&S.money>=debt?"":"disabled"}>一次性还清${debt>0?"（"+fmtY(debt)+"）":"（无欠款）"}</button>
+      </div>
+      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);
+  },
+  doBorrow(mult){const r=borrowMoney(CFG.LOAN.STEP*mult);
+    UI.toast(r.msg,r.ok?"good":"bad");if(r.ok){this.refresh();this.openLoan()}},
+  doRepay(amt){const r=repayMoney(amt);
+    UI.toast(r.msg,r.ok?"good":"bad");if(r.ok&&r.msg!=="没有欠款，无债一身轻"){this.refresh();this.openLoan()}},
+  doUpgradeOffice(){
+    const r=upgradeOffice();
+    UI.toast(r.msg,r.ok?"good":"bad");
+    if(r.ok){this.refresh();this.close()}
+  },
+
+  /* ---- 决策事件卡 ---- */
+  _ev:null,
+  openDeck(ev){
+    this._ev=ev;
+    const big=BIG_EVENTS.includes(ev);
+    let opts="";
+    ev.opts.forEach((o,i)=>{
+      const ok=!o.ok||o.ok(S);
+      opts+=`<button class="pxbtn ${i===0?"":"gray"} sm" onclick="UI.doDeckOpt(${i})" ${ok?"":"disabled"}>${o.l}${ok?"":"（条件不足）"}</button>`});
+    /* 对话形象：事件人物像素头像（占位美术） */
+    const face=EVENT_FACE[ev.id]||"staff",fc=VISITOR_COLOR[ev.id]||"#8a6a4a";
+    this.open(`<h2>${big?"🏆 公司大事记":"⚡ 突发事件"}</h2>
+      <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:4px">
+        <img src="${faceArt(face)}" alt="${face}" style="width:64px;height:64px;image-rendering:pixelated;border:3px solid ${fc};border-radius:10px;background:#fffaf0;flex:0 0 auto;box-shadow:0 3px 0 rgba(0,0,0,.2)">
+        <div style="font-size:13px;color:var(--ink);line-height:1.8;flex:1;padding-top:6px"><b>${ev.t}</b><br>${ev.d}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">${opts}</div>
+      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">先不管</button></div>`);
+  },
+  doDeckOpt(i){
+    const ev=this._ev;if(!ev||!ev.opts[i])return;
+    const msg=ev.opts[i].f();
+    if(msg)UI.toast(msg,"info");
+    this._ev=null;this.refresh();this.close();
+  },
+
+  /* ---- 月报 / 结算 ---- */
+  openMonth(m){
+    this.open(`<h2>📊 第 ${m} 个月结算</h2>
+      <div class="cardrow">
+        <div class="card"><h3>本月营业额</h3><div class="num" style="font-size:20px;font-weight:900;color:#b23a32">${fmtY(S.monthRevenue)}</div></div>
+        <div class="card"><h3>本月订单</h3><div class="num" style="font-size:20px;font-weight:900;color:#3f7fc1">${S.monthOrders} 单</div></div>
+      </div>
+      <div class="desc">资金 ${fmtY(S.money)} ｜ 口碑 ${S.rep.toFixed(1)}★ ｜ 粉丝 ${Math.floor(S.fans)} ｜ 称号「${CFG.LEVELS[S.level][1]}」</div>
+      <div class="panelclose"><button class="pxbtn sm" onclick="UI.close()">继续经营</button></div>`);
+    S.monthRevenue=0;S.monthOrders=0;
+  },
+  openEnd(mode){
+    const broke=mode===true, acquired=mode==="acquired";
+    const r=S.totalRevenue;
+    let rank="C",title="佛系店主",cmt="生意冷清，再接再厉…";
+    if(r>=1000000){rank="SS";title="百万传奇！！";cmt="从车库小店到百万帝国——你写进了行业史册！"}
+    else if(r>=200000){rank="S";title="电商巨头";cmt="你的小店上了热搜，同行都在研究你！"}
+    else if(r>=80000){rank="A";title="爆款工厂";cmt="远超首期目标，口碑与销量双丰收！"}
+    else if(r>=40000){rank="B";title="销冠小铺";cmt="首期目标达成，继续冲！"}
+    else if(r>=16000){rank="C";title="佛系店主";cmt="小有名气，再来一局冲更高！"}
+    if(acquired){title="功成身退";cmt=`巨头以 ${fmtY(Math.round(r*0.5+20000))} 收购了店铺——创业故事完美收官！`}
+    else if(broke){rank="F";title="资金链断裂…";cmt="店铺破产了，总结经验再来！"}
+    $("#endRank").textContent=rank;
+    $("#endTitle").textContent=(acquired?"收购结算：":broke?"破产结算：":"经营收官：")+title;
+    const nAchv=Object.keys(S.achv||{}).length,nFac=Object.keys(S.fac||{}).length;
+    $("#endStats").innerHTML=
+      `<div>累计营业额 <span>${fmtY(S.totalRevenue)}</span></div><div>累计订单 <span>${S.totalOrders} 单</span></div>
+       <div>最终粉丝 <span>${Math.floor(S.fans)}</span></div><div>最终口碑 <span>${S.rep.toFixed(1)} ★</span></div>
+       <div>获得称号 <span>${CFG.LEVELS[S.level][1]}</span></div><div>经营天数 <span>${S.day} 天</span></div>
+       <div>成就解锁 <span>${nAchv}/${CFG.ACHV.length}</span></div><div>投资产业 <span>${nFac} 处</span></div>
+       ${S.debt>0?`<div style="grid-column:1/3;text-align:center;color:#ff9a8a;font-size:13px">⚠ 仍欠银行 ${fmtY(S.debt)}（每日利滚利）</div>`:""}
+       <div style="grid-column:1/3;text-align:center;color:#cdbfa0;font-size:12px">${cmt}</div>`;
+    $("#endDiary").innerHTML=`<div class="dt">📖 经营日记</div>`+
+      S.diary.map(e=>`<div><b>D${e.d}</b>${e.t}</div>`).join("");
+    localStorage.removeItem("boomStory.save");
+    this.close();
+    $("#gameUI").classList.remove("on");
+    $("#endScreen").classList.remove("hidden");
+    MAIN.running=false;
+  },
+  save(){try{if(S){const c={...S};delete c.fx;localStorage.setItem("boomStory.save",JSON.stringify(c))}}catch(e){}},
+  load(){try{const d=localStorage.getItem("boomStory.save");if(!d)return null;
+    const o=JSON.parse(d);
+    /* 旧存档迁移 */
+    if(!o.live)o.live={active:false,daysLeft:0,pid:null,cool:0,style:null,fit:null,riskHit:false};
+    else{o.live.style=o.live.style||null;o.live.fit=o.live.fit||null;
+      if(o.live.riskHit===undefined)o.live.riskHit=false}
+    if(o.deckCd===undefined)o.deckCd=0;
+    if(o.officeLevel===undefined)o.officeLevel=1;
+    if(!o.diary)o.diary=[{d:1,t:"在车库里用 ¥3,500 启动了小店"}];
+    if(!o.flags)o.flags={firstSale:false,fan1000:false,bigDay:false,firstLive:false,liveUnlock:false,msRev:0};
+    else{["firstLive","liveUnlock"].forEach(k=>{if(o.flags[k]===undefined)o.flags[k]=false});
+      if(o.flags.msRev===undefined)o.flags.msRev=0}
+    if(!o.flags.be)o.flags.be={};
+    if(o.flags.beBet===undefined)o.flags.beBet=null;
+    if(!o.staff)o.staff=[];
+    o.staff.forEach(s=>{if(s.fatigue===undefined)s.fatigue=0;if(s.resting===undefined)s.resting=false});
+    if(o.products)o.products.forEach(p=>{if(p.fresh===undefined)p.fresh=0;if(p.hot===undefined)p.hot=false;
+      if(p.supp===undefined){p.supp=0;p.qc=0;p.pre=0}});
+    if(o.items===undefined)o.items={};
+    if(o.decor===undefined)o.decor={owned:{potted:1},placed:[]};   // 旧存档送一盆绿植尝鲜
+    if(o.fac===undefined)o.fac={};
+    if(o.achv===undefined)o.achv={};
+    if(o.goalIdx===undefined)o.goalIdx=0;
+    if(o.flags.maxDayOrders===undefined)o.flags.maxDayOrders=0;
+    if(o.flags.wageUp===undefined)o.flags.wageUp=0;
+    if(o.flags.giftLive===undefined)o.flags.giftLive=0;
+    if(o.flags.rentUp===undefined)o.flags.rentUp=false;
+    if(o.debt===undefined)o.debt=0;
+    if(o.flags.debtWarn===undefined)o.flags.debtWarn=false;
+    if(o.flags.hiddenSeen===undefined)o.flags.hiddenSeen={};
+    if(!o.itemFx)o.itemFx={rocketDays:0,insureDays:0};
+    if(!o.adFx)o.adFx={adBoost:0,revBoost:0};
+    if(!o.staffNextId)o.staffNextId=1;
+    return o}catch(e){return null}},
+};
+
+/* ============================ INPUT ============================ */
+const ACTIONS={ad:()=>UI.openAd(),ship:()=>UI.openShip(),ticket:()=>UI.openTickets(),shop:()=>UI.openShop(),loan:()=>UI.openLoan(),
+  live:()=>UI.openLive(),staff:()=>UI.openStaff(),office:()=>UI.openOffice(),decor:()=>UI.openDecor(),
+  mute:()=>{$("#btnMute").textContent=AUD.toggle()?"🔇":"🔊"},
+  scene:()=>{SCENE.show(SCENE.mode==="office"?"studio":"office");
+    $("#btnScene").textContent=SCENE.mode==="office"?"🎬 直播间":"🏢 办公室"},
+  items:()=>UI.openItems()};
+document.querySelectorAll("[data-act]").forEach(b=>b.addEventListener("click",()=>ACTIONS[b.dataset.act]()));
+document.querySelectorAll("[data-spd]").forEach(b=>b.addEventListener("click",()=>{
+  MAIN.speed=+b.dataset.spd;
+  document.querySelectorAll("[data-spd]").forEach(x=>x.classList.toggle("act",x===b));}));
+window.addEventListener("keydown",e=>{
+  if(!MAIN.running)return;
+  if(e.key===" "){e.preventDefault();
+    const cur=MAIN.speed;MAIN.speed=cur>0?0:1;
+    document.querySelectorAll("[data-spd]").forEach(x=>x.classList.toggle("act",+x.dataset.spd===MAIN.speed));}
+  if(e.key==="Escape")UI.close();
+  const KEYS=["ad","ship","ticket","shop","live","staff","office"];
+  if("1234567".includes(e.key)&&!UI.isOpen()){const a=KEYS[+e.key-1];if(a)ACTIONS[a]();}
+});
+$("#btnNew").addEventListener("click",()=>{newGame();startGame()});
+$("#btnContinue").addEventListener("click",()=>{const d=UI.load();if(d){S=d;S.fx=[];startGame()}});
+$("#btnHelp").addEventListener("click",()=>$("#helpBox").classList.toggle("show"));
+$("#btnRestart").addEventListener("click",()=>{$("#endScreen").classList.add("hidden");$("#titleScreen").classList.remove("hidden")});
+$("#panelLayer").addEventListener("click",e=>{
+  if(e.target.id==="panelLayer"&&!$("#panel").classList.contains("decor"))UI.close()});
+/* 画布 pointer 事件 → 15×15 格位（考虑 object-fit:contain 的黑边居中偏移） */
+function sceneGrid(e){
+  const r=CV.getBoundingClientRect(),s=Math.min(r.width,r.height)/W;
+  const x=Math.floor((e.clientX-r.left-(r.width-W*s)/2)/(T*s));
+  const y=Math.floor((e.clientY-r.top-(r.height-H*s)/2)/(T*s));
+  return[x,y]}
+/* 场景编辑模式：点遮罩区域 = 点场景，坐标换算成 15×15 格位交给 decorTap */
+$("#panelLayer").addEventListener("pointerdown",e=>{
+  if(e.target.id!=="panelLayer"||!$("#panel").classList.contains("decor"))return;
+  const[x,y]=sceneGrid(e);
+  if(x>=0&&x<15&&y>=0&&y<15)UI.decorTap(x,y);
+  e.stopPropagation()});
+/* 放置模式（面板已关）：直接点画布放置/收回摆设 */
+CV.addEventListener("pointerdown",e=>{
+  if(!UI._decorEdit)return;
+  const[x,y]=sceneGrid(e);
+  if(x>=0&&x<15&&y>=0&&y<15)UI.decorTap(x,y)});
+$("#btnDecorDone").addEventListener("click",()=>UI.close());
+$("#btnDecorPanel").addEventListener("click",()=>{$("#decorBar").classList.remove("on");UI.openDecor()});
+function startGame(){
+  $("#titleScreen").classList.add("hidden");
+  $("#gameUI").classList.add("on");
+  SCENE.show(S&&S.live.active?"studio":"office");
+  $("#btnScene").textContent=SCENE.mode==="office"?"🎬 直播间":"🏢 办公室";
+  if(S.pendingEvent)spawnVisitor(S.pendingEvent.id);   // 恢复未处理的上门事件
+  UI.refresh();MAIN.running=true;MAIN.acc=0;
+}
+/* 全局按钮点击音 */
+document.addEventListener("click",e=>{if(e.target.closest(".pxbtn"))AUD.play("click")},true);
+$("#btnMute").textContent=AUD.mute?"🔇":"🔊";
+
+/* ============================ MAIN ============================ */
+const MAIN={
+  running:false,speed:1,acc:0,last:0,
+  loop(t){
+    const dt=Math.min((t-MAIN.last)/1000,0.1);MAIN.last=t;
+    if(MAIN.running&&S){
+      const paused=UI.isOpen()||MAIN.speed===0;
+      if(!paused){
+        MAIN.acc+=dt*1000*MAIN.speed;
+        let guard=0;
+        while(MAIN.acc>=CFG.DAY_MS&&guard++<5){MAIN.acc-=CFG.DAY_MS;tickDay();UI.refresh();
+          if(!MAIN.running)break;}
+      }
+      const rdt=paused?0:dt*MAIN.speed;      // 演出随速度缩放，暂停时静止
+      draw(rdt);
+    }
+    requestAnimationFrame(MAIN.loop);
+  }
+};
+
+/* ---- 启动 ---- */
+bakeAll();bakeTerrain();bakeProdBoxes();bakeStudio();
+PRODBOX._any=PRODBOX[CFG.CATS[0].name];
+if(UI.load())$("#btnContinue").style.display="";
+newGame();                       // 预建状态供渲染
+draw(0);
+requestAnimationFrame(t=>{MAIN.last=t;MAIN.loop(t)});
+</script>
+</body>
+</html>
