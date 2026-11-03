@@ -162,9 +162,11 @@ canvas#scene{width:100%;height:100%;object-fit:contain;display:block;image-rende
 /* 面板（决策弹窗） */
 #panelLayer{position:absolute;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(20,14,24,.55)}
 #panelLayer.on{display:flex}
-#panelLayer.decor{background:rgba(20,14,24,.1)}   /* 场景编辑：遮罩变淡可点 */
+#panelLayer.decor{background:rgba(20,14,24,.55)}   /* 场景编辑：全屏面板 */
 #panel{width:min(94%,420px);max-height:86%;overflow:auto;padding:14px}
-#panel.decor{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:min(96%,430px);max-height:52%;box-shadow:0 -4px 14px rgba(0,0,0,.3)}
+#panel.decor{position:fixed;inset:0;width:100%;max-width:none;max-height:100%;height:100%;
+  padding:16px 14px calc(20px + env(safe-area-inset-bottom));border-width:0;border-radius:0;
+  box-shadow:none;z-index:70}
 /* 放置模式悬浮条：面板关闭后仍可完成/返回布置面板 */
 #decorBar{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:45;display:none;gap:8px}
 #decorBar.on{display:flex}
@@ -243,27 +245,32 @@ canvas#scene{width:100%;height:100%;object-fit:contain;display:block;image-rende
       <button class="pxbtn blue sm" id="btnHelp" style="align-self:center">玩法说明</button>
     </div>
     <div class="help" id="helpBox">
-      <b>目标：</b>把营业额做到 ¥40,000，之后开启<b>进阶目标链</b>（10 万→20 万→…→百万传奇），每阶段送永久徽章加成。<b>没有期限</b>，想退休随时到升级面板点「结束经营」收官；资金低于 -¥1,500 则破产。<br>
-      <b>节奏：</b>一天约 3 秒，随时暂停；关掉页面自动存档，摸鱼时开一局刚好。<br>
-      <b>投流：</b>花钱买曝光，爆款期投流收益最大。<br>
-      <b>发货：</b>产能不足会积压订单、口碑下跌——爆单也可能是灾难！<br>
-      <b>售后：</b>限时 4 天的工单，处理方式决定口碑走向。<br>
-      <b>新品：</b>研发有三步决策——供应商/品控/预热；<b>品类按梯队解锁</b>：生意做大了才能研发高价品类，别想开局躺赢！研发完成后还要<b>美工做素材</b>才能上架，素材质量决定首发热度；热度会退烧，<b>卖得越火爆退烧越快</b>，同款重复研发还会"内卷"涨价！<br>
-      <b>美工部：</b>招聘美工可加速素材、提升首发质量；美工和运营凑一起偶尔会吵架——力挺谁、还是请客团建，你来断！<br>
-      <b>隐藏品类：</b>达成特殊条件可解锁 3 个神秘品类（联名款/盲盒/AI 硬件），高研发投入、高客单价！<br>
-      <b>道具：</b>后期金币花在刀刃上——火箭投流、云仓救火、打包机、爆款秘籍…营业额每破 2 万还送道具！<br>
-      <b>贷款：</b>资金周转不灵可点右上角 🏦 向银行借款（额度随称号提升），每天 1.5% 利滚利——救急不救穷，尽快还清！<br>
-      <b>事件：</b>经营中会冒出事件卡——达人合作、竞品降价、平台抽查…每张卡都有对应的<b>人物对话形象</b>，你的选择直接影响数值！<br>
-      <b>布置：</b>点右上角 🎨 打开「场景布置」，点地板自由装点办公室！基础款（绿植/整理架）金币购买，麦克风、咖啡机、鱼缸、猫窝等 10 件好物<b>看视频免费解锁</b>——件件都有小幅加成！<br>
-      <b>直播：</b>200 粉丝解锁。选品有适配度评级，开播风格三种任选，小心缺货翻车！<br>
-      <b>员工：</b>六种正式员工会成长也有疲劳——打包/客服/运营/主播/美工，仓管员还会自动补货；太累会罢工，记得让他们歇一天。<br>
-      <b>称号：</b>每个称号等级带永久加成——曝光、产能、成本、涨粉，爬得越高店越强。<br>
-      <b>产业：</b>升级面板里可投资云仓分部、自建物流、MCN 基地等产业——大额资金的长期出口，永久加成但要付维护费。<br>
-      <b>成就：</b>10 项成就可解锁，集齐徽章还有小额永久加成。<br>
-      <b>大促：</b>每 15 天平台大促日，要不要砸钱抢坑位自己定！<br>
-      <b>大事记：</b>投资人、税务稽查、年会、巨头收购……公司级抉择将深度改变创业走向！<br>
-      <b>沉浸：</b>开声音！8-bit 音效随经营起伏；员工会闲聊抱怨，顾客会排队上门，事件由"来客"敲门前触发。<br>
-      <b>操作：</b>底部按钮打开决策面板（自动暂停），空格暂停，1~6 快捷开面板。
+      <b style="color:#f2a24b">◆ 经营目标</b><br>
+      把营业额做到 ¥40,000，解锁<b>进阶目标链</b>（10 万 → 20 万 → … → 百万传奇），每阶段送永久徽章。没有期限，想收官随时在升级面板点「结束经营」；资金跌破 -¥1,500 即刻破产。<br>
+      <b style="color:#f2a24b">◆ 基本节奏</b><br>
+      1 游戏天 ≈ 3 秒，可随时暂停；关掉页面自动存档，摸鱼开一局刚好。<br>
+      <b style="color:#f2a24b">◆ 增长引擎</b><br>
+      · <b>投流</b>｜花钱换曝光，爆款期回报最猛。<br>
+      · <b>新品</b>｜研发三步：供应商 / 品控 / 预热，品类按梯队解锁；研发完还要美工做素材才能上架，素材质量决定首发热度。热度会自然退烧，<b>卖得越火退得越快</b>，同款重研还会「内卷」涨价。<br>
+      · <b>直播</b>｜200 粉丝解锁。选品看适配度，口误与缺货都会砸口碑。<br>
+      <b style="color:#f2a24b">◆ 后勤防线</b><br>
+      · <b>发货</b>｜产能不足会积压订单、口碑下跌——爆单也可能是灾难。<br>
+      · <b>售后</b>｜4 天限时工单：退款保口碑但亏钱，补发折中，拒绝保钱但掉粉。<br>
+      · <b>员工</b>｜六种岗位会成长也会疲劳，仓管员自动补货；太累会罢工，记得放一天假。<br>
+      · <b>产业</b>｜云仓分部、自建物流、MCN 基地等长期投资，永久加成但每天付维护费。<br>
+      <b style="color:#f2a24b">◆ 特殊系统</b><br>
+      · <b>隐藏品类</b>｜达成条件解锁联名款 / 盲盒 / AI 硬件三条神秘赛道，高投入高客单。<br>
+      · <b>道具</b>｜火箭投流、云仓救火、打包机、爆款秘籍；营业额每破 2 万白送一件。<br>
+      · <b>贷款</b>｜点右上角 🏦 借款，额度随称号提升，日息 1.5% 利滚利——救急不救穷。<br>
+      · <b>布置</b>｜点右上角 🎨 自由装点办公室。基础款金币购买，麦克风、咖啡机、鱼缸、猫窝等 10 件好物<b>看视频免费解锁</b>，件件有加成。<br>
+      · <b>事件</b>｜经营中会有人敲门送来事件卡：达人合作、竞品降价、平台抽查……你的选择直接改写数值。<br>
+      <b style="color:#f2a24b">◆ 进阶玩法</b><br>
+      · <b>称号</b>｜每级带永久加成（曝光 / 产能 / 成本 / 涨粉），爬得越高店越强。<br>
+      · <b>成就</b>｜10 项徽章，集齐还有额外永久加成。<br>
+      · <b>大促</b>｜每 15 天一次，砸不砸钱抢坑位自己定。<br>
+      · <b>大事记</b>｜投资人、税务稽查、年会、巨头收购等公司级抉择，深度改变创业走向。<br>
+      <b style="color:#8a6a4a">◆ 操作</b><br>
+      底部按钮开面板（自动暂停）｜空格暂停｜1~6 快捷开面板｜建议开声音，8-bit 音效会随经营起伏。
     </div>
   </div>
 
@@ -310,7 +317,7 @@ canvas#scene{width:100%;height:100%;object-fit:contain;display:block;image-rende
   <!-- ============ 结算屏 ============ -->
   <div id="endScreen" class="screen hidden">
     <div class="rank" id="endRank">S</div>
-    <div class="logo" style="font-size:30px" id="endTitle">电商传奇达成！</div>
+    <div class="logo" style="font-size:30px" id="endTitle">◆ 经营收官</div>
     <div class="stats" id="endStats"></div>
     <div class="diarybox" id="endDiary"></div>
     <button class="pxbtn" id="btnRestart">🔁 再来一局</button>
@@ -659,17 +666,17 @@ function shipFee(){return S.fac&&S.fac.shipnet?CFG.FACIL.shipnet.fee:CFG.FEE}   
 /* ---- 银行贷款：救急资金池，每日 1.5% 利滚利，额度随称号提升 ---- */
 function loanLimit(){return CFG.LOAN.LIMIT+S.level*CFG.LOAN.LEVEL_ADD}
 function borrowMoney(amt){
-  if(S.debt+amt>loanLimit())return{ok:false,msg:"超出贷款额度（当前上限 "+fmtY(loanLimit())+"）"};
+  if(S.debt+amt>loanLimit())return{ok:false,msg:"✖ 超出贷款额度 · 上限 "+fmtY(loanLimit())};
   S.debt+=amt;S.money+=amt;
   diary(`向银行借款 ${fmtY(amt)}，当前欠款 ${fmtY(S.debt)}`);
-  return{ok:true,msg:"🏦 贷款到账 "+fmtY(amt)+"！每天 1.5% 利滚利，尽快还清"}}
+  return{ok:true,msg:"★ 贷款到账 "+fmtY(amt)+" · 每日 1.5% 利滚利，尽快还清"}}
 function repayMoney(amt){
   amt=Math.min(amt,S.debt);
-  if(amt<=0)return{ok:false,msg:"没有欠款，无债一身轻"};
-  if(S.money<amt)return{ok:false,msg:"资金不足，还不上的"};
+  if(amt<=0)return{ok:false,msg:"◆ 没有欠款 · 无债一身轻"};
+  if(S.money<amt)return{ok:false,msg:"✖ 资金不足 · 还不上的"};
   S.money-=amt;S.debt-=amt;S.flags.debtWarn=false;
   diary(`归还银行贷款 ${fmtY(amt)}，剩余欠款 ${fmtY(S.debt)}`);
-  return{ok:true,msg:S.debt>0?"还款 "+fmtY(amt)+"，剩余欠款 "+fmtY(S.debt):"🏦 贷款还清，无债一身轻！"}}
+  return{ok:true,msg:S.debt>0?"◆ 还款 "+fmtY(amt)+" · 剩余欠款 "+fmtY(S.debt):"★ 贷款还清 · 无债一身轻"}}
 /* 道具系统：购买入背包，主动使用 */
 function buyItem(k){const it=CFG.ITEMS[k];
   if(!it||S.money<it.cost)return false;
@@ -678,17 +685,17 @@ function buyItem(k){const it=CFG.ITEMS[k];
 function useItem(k,pid){const it=CFG.ITEMS[k];
   if(!it||!(S.items[k]>0))return"背包里没有这个道具";
   const done=(msg,tone)=>{S.items[k]--;UI.toast(msg,tone||"good");diary(msg);return null};
-  if(k==="rocket"){S.itemFx.rocketDays=it.dur;return done("🚀 火箭投流启动，未来 3 天曝光 ×2.2！")}
-  if(k==="giftbox"){S.rep=clamp(S.rep+0.5,1,5);S.fans+=300;return done("🎁 感恩回馈大获好评：口碑 +0.5、粉丝 +300！")}
-  if(k==="machine"){S.flags.machine=true;return done("🔧 全自动打包机上线，打包产能永久 +8！")}
+  if(k==="rocket"){S.itemFx.rocketDays=it.dur;return done("◆ 火箭投流点火 · 未来 3 天曝光 ×2.2")}
+  if(k==="giftbox"){S.rep=clamp(S.rep+0.5,1,5);S.fans+=300;return done("◆ 感恩回馈生效 · 口碑 +0.5 · 粉丝 +300")}
+  if(k==="machine"){S.flags.machine=true;return done("◆ 全自动打包机就位 · 产能永久 +8")}
   if(k==="cloud"){const n=S.pending.length;let g=0;
     S.pending.forEach(p=>g+=p*shipFee()-CFG.FULFILL);S.pending=[];
     S.money+=g;S.totalRevenue+=g;S.monthRevenue+=g;
-    return done(`📦 云仓接管 ${n} 笔积压订单，全额回款 ${fmtY(Math.round(g))}！`)}
-  if(k==="insure"){S.itemFx.insureDays=it.dur;return done("🎫 售后保险生效，未来 5 天工单自动承保")}
+    return done(`◆ 云仓接管 ${n} 笔积压 · 全额回款 ${fmtY(Math.round(g))}`)}
+  if(k==="insure"){S.itemFx.insureDays=it.dur;return done("◆ 售后保险生效 · 5 天内工单自动承保")}
   if(k==="secret"){const p=S.products.find(q=>q.id===pid&&q.devLeft<=0);
     if(!p)return"请先选择一款在售商品";
-    p.heat=100;return done(`🧪 「${p.name}」吃透爆款秘籍，热度拉满 100！`)}
+    p.heat=100;return done(`◆「${p.name}」服下爆款秘籍 · 热度拉满 100`)}
   return"未知道具"}
 function effHeat(){let h=0;S.products.forEach(p=>h=Math.max(h,p.heat));return h}
 function facUpkeep(){let u=0;for(const k in S.fac)u+=CFG.FACIL[k].upkeep;return u}
@@ -697,25 +704,25 @@ function dailyCost(){return Math.round((S.workers*CFG.WORKER_PAY + (S.saas?CFG.S
 /* ---- 四大决策 API ---- */
 function buyAd(lv){const a=CFG.AD[lv];if(!a||S.money<a.cost)return false;
   S.money-=a.cost;S.adLevel=lv;S.adDays+=a.days;
-  UI.toast(`📣 已投放「${a.name}」${a.days} 天，曝光 ×${a.mult}！`,"good");return true}
+  UI.toast(`◆ 投流启动 ·「${a.name}」${a.days} 天 · 曝光 ×${a.mult}`,"good");return true}
 function changeWorkers(d){const n=S.workers+d;
   if(n<0||n>CFG.WORKER_MAX)return false;S.workers=n;
-  UI.toast(d>0?`招了临时工（${S.workers}人）`:`临时工离职（${S.workers}人）`,"info");return true}
+  UI.toast(d>0?`◆ 临时工 +1 · 现有 ${S.workers} 人`:`◆ 临时工 -1 · 现有 ${S.workers} 人`,"info");return true}
 function toggleSaas(){S.saas=!S.saas;
-  UI.toast(S.saas?"已开通云仓代发 +20 单/天":"已关闭云仓代发","info");return true}
+  UI.toast(S.saas?"◆ 云仓代发开启 · 产能 +20 单/天":"◆ 云仓代发关闭","info");return true}
 function resolveTicket(id,act){
   const i=S.tickets.findIndex(t=>t.id===id);if(i<0)return false;
   const t=S.tickets[i];S.tickets.splice(i,1);
   if(act==="refund"){const p=-t.price;S.money+=p;S.rep=clamp(S.rep+0.15,1,5);S.fans=Math.max(0,S.fans-2);
-    UI.fx("cash",p);UI.toast("已全额退款，顾客很满意（口碑↑）","good");}
+    UI.fx("cash",p);UI.toast("◆ 全额退款 · 口碑 ▲ · 顾客满意","good");}
   else if(act==="resend"){S.money-=t.cost+CFG.FULFILL;S.rep=clamp(S.rep+0.08,1,5);
-    UI.toast("已补发换货，顾客收货中（口碑小幅↑）","good");}
+    UI.toast("◆ 补发换货 · 口碑小幅 ▲ · 顾客收货中","good");}
   else{S.rep=clamp(S.rep-0.35,1,5);S.fans=Math.max(0,S.fans-5);
-    UI.toast("拒绝退款…顾客很生气（口碑↓↓）","bad");}
+    UI.toast("✖ 拒绝退款 · 口碑 ▼▼ · 顾客暴怒","bad");}
   return true}
 function devProduct(ci,plan,hid){
   const c=(hid?CFG.HIDDEN:CFG.CATS)[ci];if(!c)return false;
-  if(c.cond&&!c.cond(S)){UI.toast(`「${c.name}」还没解锁：${c.hint}`,"bad");return false}
+  if(c.cond&&!c.cond(S)){UI.toast(`✖「${c.name}」尚未解锁 · ${c.hint}`,"bad");return false}
   plan=plan||{supp:0,qc:0,pre:0};
   const D=CFG.DEV_OPTS;
   const devCost=Math.ceil(devFee(c)*D.qc[plan.qc].costMult);   // 同款重复研发：市场内卷，费用递增
@@ -725,7 +732,7 @@ function devProduct(ci,plan,hid){
   S.products.push({id:S.nextId++,name:c.name,color:c.color,
     cost:Math.round(c.cost*D.supp[plan.supp].costMult),price:c.price,
     heat:c.heat,stock:0,devLeft:3,fresh:0,supp:plan.supp,qc:plan.qc,pre:plan.pre});
-  UI.toast(`开始研发「${c.name}」（${D.supp[plan.supp].name}·${D.qc[plan.qc].name}·${D.pre[plan.pre].name}），3 天后上架`,"info");
+  UI.toast(`◆ 立项「${c.name}」· ${D.supp[plan.supp].name}｜${D.qc[plan.qc].name}｜${D.pre[plan.pre].name} · 3 天后上架`,"info");
   diary(`立项研发「${c.name}」：${D.supp[plan.supp].name}+${D.qc[plan.qc].name}+${D.pre[plan.pre].name}`);
   return true}
 /* 同品类重复研发费用：×(1+0.6×已有同款数)，遏制无脑刷同一款 */
@@ -747,10 +754,10 @@ function restock(pid){
   const c=Math.ceil(p.cost*CFG.RESTOCK_QTY*(S.hikeDays>0?1.5:1));
   if(S.money<c)return false;
   S.money-=c;p.stock+=CFG.RESTOCK_QTY;
-  UI.toast(`「${p.name}」补货 +${CFG.RESTOCK_QTY} 件`,"good");return true}
+  UI.toast(`◆「${p.name}」补货 +${CFG.RESTOCK_QTY} 件`,"good");return true}
 function delist(pid){
   const i=S.products.findIndex(x=>x.id===pid);if(i<0)return false;
-  UI.toast(`已下架「${S.products[i].name}」`,"info");S.products.splice(i,1);return true}
+  UI.toast(`◆ 已下架「${S.products[i].name}」`,"info");S.products.splice(i,1);return true}
 
 /* ---- 直播 & 员工 API ---- */
 function canLive(){return S.fans>=CFG.LIVE.UNLOCK_FANS&&!S.live.active&&S.live.cool<=0}
@@ -770,14 +777,14 @@ function startLive(pid,style){
   style=CFG.STYLES[style]?style:"hawking";
   S.money-=CFG.LIVE.COST;
   S.live={active:true,daysLeft:CFG.LIVE.DAYS,pid,cool:0,style,fit:liveFit(p),riskHit:false};
-  UI.toast(`开播！主推「${p.name}」（${S.live.fit.tag}）· ${CFG.STYLES[style].name}`,"good");
+  UI.toast(`◆ 开播 · 主推「${p.name}」· ${S.live.fit.tag} · ${CFG.STYLES[style].name}`,"good");
   if(!S.flags.firstLive){S.flags.firstLive=true;diary("直播间第一次亮灯，老板亲自上阵")}
   SCENE.show("studio");                     // 切到直播间看弹幕（演出层协调）
   $("#btnScene").textContent="🏢 办公室";
   return true}
 function endLive(early){
   S.live={active:false,daysLeft:0,pid:null,cool:early?1:Math.max(0,CFG.LIVE.COOLDOWN-(S.fac&&S.fac.mcn?2:0)),style:null,fit:null,riskHit:false};
-  UI.toast(early?"提前收播，设备冷却中…":"本场直播圆满结束！","info")}
+  UI.toast(early?"◆ 提前收播 · 设备冷却中":"◆ 本场直播收官 · 辛苦啦","info")}
 /* 疲劳效率：休息 0 / 疲劳≥85 打 4 折 / ≥60 打 7.5 折 */
 function staffEff(s){
   if(s.resting)return 0;
@@ -800,12 +807,12 @@ function officePackBonus(){return CFG.OFFICE[S.officeLevel].pack||0}
 function officeExpoBonus(){return CFG.OFFICE[S.officeLevel].expo||0}
 function upgradeOffice(){
   const nx=CFG.OFFICE[S.officeLevel+1];
-  if(!nx)return{ok:false,msg:"办公室已是最高级"};
-  if(S.money<nx.need)return{ok:false,msg:"资金储备需达 "+fmtY(nx.need)+"（当前 "+fmtY(Math.floor(S.money))+"）"};
+  if(!nx)return{ok:false,msg:"✖ 办公室已是最高级"};
+  if(S.money<nx.need)return{ok:false,msg:"✖ 资金储备需达 "+fmtY(nx.need)+" · 当前 "+fmtY(Math.floor(S.money))};
   S.money-=nx.cost;S.officeLevel++;
   bakeOfficeSkin(S.officeLevel);
   diary(`小店搬进了「${nx.name}」，场面越来越像样了`);
-  return{ok:true,msg:"🎉 办公室升级为「"+nx.name+"」！产能 +"+nx.pack+" 单/天"+(nx.expo?"、曝光 +"+nx.expo+"/天":"")};
+  return{ok:true,msg:"★ 办公室升级为「"+nx.name+"」· 产能 +"+nx.pack+" 单/天"+(nx.expo?" · 曝光 +"+nx.expo+"/天":"")};
 }
 function staffExpoBonus(){let b=0;S.staff.forEach(s=>{if(s.role==="operator")b+=(3+s.level*5)*staffEff(s)});return Math.round(b)}
 function staffAnchorBonus(){let b=0;S.staff.forEach(s=>{if(s.role==="anchor")b+=(15+s.level*10)*staffEff(s)});return Math.round(b)}
@@ -822,12 +829,12 @@ function hireStaff(role){
   const name=CFG.STAFF_NAMES.find(n=>!used.includes(n))||("新员工"+S.staffNextId);
   S.money-=r.hire;
   S.staff.push({id:S.staffNextId++,name,role,level:1,exp:0,fatigue:0,resting:false});
-  UI.toast(`${r.name}「${name}」入职！（签约费 ${fmtY(r.hire)}）`,"good");
+  UI.toast(`◆ 入职 · ${r.name}「${name}」· 签约费 ${fmtY(r.hire)}`,"good");
   diary(`「${name}」加入小店，成为${r.name}`);
   return true}
 function fireStaff(id){
   const i=S.staff.findIndex(s=>s.id===id);if(i<0)return false;
-  UI.toast(`「${S.staff[i].name}」离开了团队`,"info");S.staff.splice(i,1);return true}
+  UI.toast(`◆「${S.staff[i].name}」离职 · 江湖再见`,"info");S.staff.splice(i,1);return true}
 function trainStaff(id){
   const s=S.staff.find(x=>x.id===id);
   if(!s||s.level>=5||S.money<CFG.TRAIN_COST)return false;
@@ -837,12 +844,12 @@ function trainStaff(id){
 function restStaff(id){
   const s=S.staff.find(x=>x.id===id);if(!s||s.resting)return false;
   s.resting=true;s.fatigue=clamp(s.fatigue-CFG.FATIGUE.REST,0,100);
-  UI.toast(`🛌「${s.name}」今天休息，明天满血回归`,"info");return true}
+  UI.toast(`◆「${s.name}」休整一日 · 明日满血复工`,"info");return true}
 function checkLevel(s){
   while(s.level<5&&s.exp>=s.level*CFG.LEVEL_EXP){
     s.exp-=s.level*CFG.LEVEL_EXP;s.level++;
-    UI.banner("⭐ 员工成长",`${CFG.STAFF_ROLES[s.role].name}「${s.name}」升到 Lv${s.level}！`)}}
-
+    UI.banner("★ 员工晋升",`${CFG.STAFF_ROLES[s.role].name}「${s.name}」升到 Lv${s.level} · 效率提升`)}
+}
 /* ---- 每日结算流水线 ---- */
 function tickDay(){
   if(S.day>CFG.GOAL_DAY)return;
@@ -857,10 +864,10 @@ function tickDay(){
     S.money-=CFG.LIVE.PER_DAY+st.cost;
     if(st.rep)S.rep=clamp(S.rep+st.rep,1,5);
     if(rngf()<0.3){const r=rngf();
-      if(r<0.34){liveMult=1.5;UI.toast("🔥 直播间弹幕爆炸，今日订单暴涨！","good")}
+      if(r<0.34){liveMult=1.5;UI.toast("◆ 弹幕爆炸 · 今日订单暴涨","good")}
       else if(r<st.misfire){const tip=100+Math.floor(rngf()*200);S.money+=tip;
-        UI.fx("cash",tip);UI.toast(`🎁 观众礼物打赏 +${fmtY(tip)}`,"good")}
-      else{S.rep=clamp(S.rep-0.1,1,5);UI.toast("😳 主播口误翻车，口碑小降","bad")}}
+        UI.fx("cash",tip);UI.toast(`◆ 观众打赏 +${fmtY(tip)}`,"good")}
+      else{S.rep=clamp(S.rep-0.1,1,5);UI.toast("✖ 主播口误翻车 · 口碑 ▼","bad")}}
   }
   const luckExpo=(S.luck&&S.luck.day===S.day)?CFG.LUCK.POOL[S.luck.type].expo||1:1;
   const luckVip=(S.luck&&S.luck.day===S.day)?CFG.LUCK.POOL[S.luck.type].vip||1:1;
@@ -894,7 +901,7 @@ function tickDay(){
   /* 直播选品缺货风险：当天丢单即触发一次性翻车惩罚 */
   if(lost&&S.live.active&&S.live.fit&&S.live.fit.risk&&!S.live.riskHit){
     S.live.riskHit=true;S.rep=clamp(S.rep-0.3,1,5);
-    UI.toast("⚠ 直播间缺货翻车！观众吐槽，口碑大降","bad")}
+    UI.toast("✖ 直播间缺货 · 口碑 ▼▼ · 观众开骂","bad")}
   S.totalOrders+=orders-lost;S.monthOrders+=orders-lost;
   S.flags.maxDayOrders=Math.max(S.flags.maxDayOrders||0,orders-lost);   // 成就统计：单日成交峰值
   /* 3) 发货回款 */
@@ -907,15 +914,15 @@ function tickDay(){
       UI.fx("cash",price,"💼 大客户！")}
     gmv+=price*rb;
     S.money+=price*shipFee()*rb-CFG.FULFILL;}
-  if(vipHit){UI.toast(`💼 遇到大客户订单，一笔进账 ${fmtY(Math.round(vipHit*shipFee()-CFG.FULFILL))}！`,"good");
+  if(vipHit){UI.toast(`★ 大客户订单 · 一笔进账 ${fmtY(Math.round(vipHit*shipFee()-CFG.FULFILL))}`,"good");
     UI.fx("confetti",1);diary("一个大客户下单，金额顶平时十单",day)}
   /* 探店博主：发货速度决定好评差评（剩余积压少=发得快） */
   if(shipped>=2&&rngf()<0.06){const back=S.pending.length;
     if(back<=3){S.rep=clamp(S.rep+0.15,1,5);S.fans+=30;
-      UI.toast("📸 探店博主光顾，发货神速获好评！口碑 +0.15","good");AUD.play("fanfare")}
+      UI.toast("★ 探店博主光顾 · 发货神速 · 口碑 +0.15","good");AUD.play("fanfare")}
     else if(back>=10){S.rep=clamp(S.rep-0.2,1,5);
-      UI.toast("📸 探店博主吐槽发货太慢，口碑 -0.2…","bad")}
-    else UI.toast("📸 探店博主默默下单，无功无过","info")}
+      UI.toast("✖ 探店博主吐槽发货慢 · 口碑 -0.2","bad")}
+    else UI.toast("◆ 探店博主默默下单 · 无功无过","info")}
   S.totalRevenue+=gmv;S.monthRevenue+=gmv;
   S.shippedSincePickup+=shipped;
   if(shipped>0)S.flags.firstSale=true;
@@ -941,18 +948,18 @@ function tickDay(){
     const t=S.tickets.shift();svc--;
     S.money-=t.cost+CFG.FULFILL;S.rep=clamp(S.rep+0.08,1,5);
     const who=S.staff.find(s=>s.role==="service");
-    UI.toast(`客服「${who?who.name:"？"}」已自动补发处理「${t.product}」售后`,"good");
+    UI.toast(`◆ 客服「${who?who.name:"？"}」自动补发 ·「${t.product}」售后结案`,"good");
   }
   for(let i=S.tickets.length-1;i>=0;i--){const t=S.tickets[i];t.daysLeft--;
     if(t.daysLeft<0){S.tickets.splice(i,1);S.money-=Math.round(t.price*0.5);
       S.rep=clamp(S.rep-0.15,1,5);
-      UI.toast(`售后超时：${t.product} 自动退款，口碑下降`,"bad");}}
+      UI.toast(`✖ 售后超时 ·「${t.product}」自动退款 · 口碑 ▼`,"bad");}}
   /* 7) 粉丝与热度衰减（直播风格影响涨粉） */
   const fanMult=S.live.active&&CFG.STYLES[S.live.style]?CFG.STYLES[S.live.style].fanMult:1;
   S.fans+=(orders-lost)*0.5*(S.rep/3)*fanMult*(1+(lvlBuff().fan||0))+(S.fac&&S.fac.brand?10:0);   // 品牌体验馆：自然涨粉 +10/天
   if(!S.flags.liveUnlock&&S.fans>=CFG.LIVE.UNLOCK_FANS){S.flags.liveUnlock=true;
     diary(`粉丝破 ${CFG.LIVE.UNLOCK_FANS}，解锁直播间！`,day);
-    UI.banner("🎬 直播解锁","底部按钮开启你的第一场直播！")}
+    UI.banner("★ 直播解锁",`粉丝破 ${CFG.LIVE.UNLOCK_FANS} · 底部按钮开启首播`)}
   S.products.forEach(p=>{
     if(!p.hot&&p.heat>=60){p.hot=true;diary(`「${p.name}」卖爆了，成了镇店爆款`,day)}
     if(S.live.active&&p.id===S.live.pid)p.heat+=CFG.LIVE.HEAT; // 直播主推热度
@@ -963,8 +970,8 @@ function tickDay(){
         const dsg=S.staff.find(s=>s.role==="designer");
         p.artLeft=dsg?(dsg.level>=3?1:2):3;   // 有美工快、Lv3 起隔天交稿；没美工自己套模板要 3 天
         p.artQ=0;
-        UI.toast(dsg?`🎨 研发完成！美工「${dsg.name}」开始制作「${p.name}」素材（${p.artLeft} 天）`
-                    :`「${p.name}」研发完成，但没有美工——自己套模板做图（${p.artLeft} 天）`,"info");}}
+        UI.toast(dsg?`◆ 研发完工 · 美工「${dsg.name}」开做「${p.name}」素材 · ${p.artLeft} 天`
+                    :`◆「${p.name}」研发完工 · 无美工，自己套模板 · ${p.artLeft} 天`,"info");}}
     else if(p.artLeft>0){p.artLeft--;
       if(p.artLeft<=0){   // 素材定稿，正式上架：素材质量 → 首发热度加成
         const dsg=S.staff.find(s=>s.role==="designer");
@@ -973,7 +980,7 @@ function tickDay(){
         if(p.pre===1)p.fresh=5;          // 蓄水预热：新鲜期 5 天
         if(p.pre===2)p.heat+=25;         // 达人种草：自带热度
         p.fresh=p.fresh||4;
-        UI.toast(`🎨 素材定稿，「${p.name}」正式上架！素材质量：首发热度 +${q}`,"good");
+        UI.toast(`★ 素材定稿 ·「${p.name}」正式上架 · 首发热度 +${q}`,"good");
         UI.fx("confetti",1);diary(`「${p.name}」素材过审上架（首发热度 +${q}）`,day);}}
   });
   /* 8) 计时器与决策事件卡 */
@@ -983,15 +990,15 @@ function tickDay(){
   if(S.adFx.revBoost>0)S.adFx.revBoost--;
   if(S.itemFx.rocketDays>0)S.itemFx.rocketDays--;
   if(S.itemFx.insureDays>0){S.itemFx.insureDays--;
-    if(S.itemFx.insureDays===0&&S.itemFx._saved){UI.toast(`🎫 保险期结束，共承保 ${S.itemFx._saved} 次售后，口碑无损`,"info");S.itemFx._saved=0}}
+    if(S.itemFx.insureDays===0&&S.itemFx._saved){UI.toast(`◆ 保险期满 · 承保 ${S.itemFx._saved} 次售后 · 口碑无损`,"info");S.itemFx._saved=0}}
   if(S.hikeDays>0)S.hikeDays--;
   if(S.debt>0){S.debt=Math.round(S.debt*(1+CFG.LOAN.RATE));   // 贷款利滚利
     if(!S.flags.debtWarn&&S.debt>loanLimit()*1.5){S.flags.debtWarn=true;
-      UI.toast("🏦 银行催收：欠款已超额度 150%！","bad");diary("欠款滚到额度一倍半，银行来催了",day)}}
+      UI.toast("✖ 银行催收 · 欠款已超额度 150%","bad");diary("欠款滚到额度一倍半，银行来催了",day)}}
   for(const hc of CFG.HIDDEN)if(hc.cond(S)&&!S.flags.hiddenSeen[hc.name]){   // 隐藏品类解锁播报
     S.flags.hiddenSeen[hc.name]=true;
-    UI.toast(`🔍 解锁隐藏品类「${hc.name}」！研发面板新增神秘赛道`,"good");
-    UI.banner("🔍 新品类发现",`「${hc.name}」加入研发列表！`);diary(`解锁隐藏品类「${hc.name}」`,day)}
+    UI.toast(`★ 解锁隐藏品类「${hc.name}」· 研发面板新增神秘赛道`,"good");
+    UI.banner("★ 新品类发现",`「${hc.name}」已加入研发列表`);diary(`解锁隐藏品类「${hc.name}」`,day)}
   if(S.deckCd>0)S.deckCd--;
   if(day%15===0&&day>2&&!S.pendingEvent&&S.deckCd<=0)triggerDeck("promofest");   // 每 15 天平台大促日
   else if(S.staff.some(s=>s.role==="designer")&&S.staff.some(s=>s.role==="operator")&&rngf()<0.056&&S.deckCd<=0&&!S.pendingEvent)
@@ -1006,7 +1013,7 @@ function tickDay(){
     if(!(s.role==="anchor"&&!S.live.active)){s.exp+=7;checkLevel(s)}
     s.fatigue=clamp(s.fatigue+(s.role==="anchor"&&S.live.active?CFG.FATIGUE.ANCHOR_LIVE:CFG.FATIGUE.DAILY)-decorRest(),0,100);
     if(s.fatigue>=100){s.resting=true;s.fatigue=Math.max(0,100-CFG.FATIGUE.REST);
-      UI.toast(`😱「${s.name}」累坏了，明天带薪躺平一天`,"bad")}
+      UI.toast(`✖「${s.name}」累垮了 · 明日强制带薪躺平`,"bad")}
   });
   /* 8.6) 仓管员自动补货（休息日不干活，资金留安全垫防补破产） */
   S.staff.forEach(s=>{
@@ -1017,23 +1024,23 @@ function tickDay(){
       if(S.money<cost+CFG.WAREHOUSE.SAFETY)return;
       S.money-=cost;p.stock+=CFG.RESTOCK_QTY;
       UI.fx("box",p.id);   // 补货动画：仓管员头顶冒箱 + 货架飘 +50
-      UI.toast(`📦 仓管员「${s.name}」补了货：「${p.name}」+${CFG.RESTOCK_QTY}${s.level>=3?"（8 折）":""}`,"info");
+      UI.toast(`◆ 仓管「${s.name}」补货 ·「${p.name}」+${CFG.RESTOCK_QTY}${s.level>=3?"（8 折）":""}`,"info");
     });
   });
   /* 8.7) 公司级大事记：对赌结算 / 分红 / 新大事访客上门 */
   if(S.flags.beBet&&S.day>=S.flags.beBet.end)settleBet();
   if(S.flags.be.vc==="share"&&S.day%30===0){S.money-=300;
-    UI.toast("💼 投资人分红日：-¥300","info")}
+    UI.toast("◆ 投资人分红日 · -¥300","info")}
   checkBigEvents();
   /* 9) 等级与里程碑 */
   const li=levelIdx(S.fans);
   if(li>S.level){S.level=li;const bd=buffDesc(CFG.LEVELS[li][2]);
-    UI.banner("🎉 店铺升级",`获得称号「${CFG.LEVELS[li][1]}」${bd?"｜"+bd:""}`);UI.fx("heart");UI.fx("confetti",li);
+    UI.banner("★ 店铺升级",`获得称号「${CFG.LEVELS[li][1]}」${bd?" · "+bd:""}`);UI.fx("heart");UI.fx("confetti",li);
     diary(`店铺升级为「${CFG.LEVELS[li][1]}」${bd?"（"+bd+"）":""}`,day)}
-  if(!S.flags.fan1000&&S.fans>=1000){S.flags.fan1000=true;UI.banner("🔥 粉丝破千","小店开始被看见了！")}
+  if(!S.flags.fan1000&&S.fans>=1000){S.flags.fan1000=true;UI.banner("★ 粉丝破千","小店开始被人看见了")}
   if(!S.flags.repGold&&S.rep>=4.8){S.flags.repGold=true;   // 满口碑里程碑：永久曝光 +10%
-    UI.banner("🏅 金牌口碑店铺","老客口口相传，曝光永久 +10%！");diary("口碑逼近满分，拿到金牌店铺称号",day);UI.fx("confetti",9)}
-  if(!S.flags.bigDay&&orders>=50){S.flags.bigDay=true;UI.banner("💥 爆单啦！",`今日 ${orders} 单！`)}
+    UI.banner("★ 金牌口碑店铺","老客口口相传 · 曝光永久 +10%");diary("口碑逼近满分，拿到金牌店铺称号",day);UI.fx("confetti",9)}
+  if(!S.flags.bigDay&&orders>=50){S.flags.bigDay=true;UI.banner("★ 爆单啦",`今日成交 ${orders} 单`)}
   const MS=[10000,25000,60000];
   while(S.flags.msRev<MS.length&&S.totalRevenue>=MS[S.flags.msRev]){
     S.flags.msRev++;diary(`累计营业额突破 ${fmtY(MS[S.flags.msRev-1])}`,day)}
@@ -1041,14 +1048,14 @@ function tickDay(){
   while(S.goalIdx<CFG.GOALS.length&&S.totalRevenue>=CFG.GOALS[S.goalIdx].rev){
     const g=CFG.GOALS[S.goalIdx];S.goalIdx++;
     const bd=buffDesc(g.buff);
-    UI.banner("🎯 "+g.name+"达成",`下一阶段：${CFG.GOALS[S.goalIdx]?CFG.GOALS[S.goalIdx].name+" "+fmtY(CFG.GOALS[S.goalIdx].rev):"已登顶传奇！"}${bd?"｜永久加成："+bd:""}`);
+    UI.banner("★ "+g.name+" 达成",`下一阶段：${CFG.GOALS[S.goalIdx]?CFG.GOALS[S.goalIdx].name+" "+fmtY(CFG.GOALS[S.goalIdx].rev):"已登顶传奇"}${bd?" · 永久加成 "+bd:""}`);
     diary(`达成${g.name}！累计营业额 ${fmtY(S.totalRevenue)}${bd?"（"+bd+"）":""}`,day);
     UI.fx("confetti",6);UI.fx("medal")}
   /* 9.6) 成就解锁检查：徽章收藏驱动 */
   for(const a of CFG.ACHV){
     if(S.achv[a.id])continue;
     if(a.cond(S)){S.achv[a.id]=true;
-      UI.toast(`🏅 成就解锁「${a.name}」：${a.desc}${a.buff?"（永久加成："+buffDesc(a.buff)+"）":""}`,"good");
+      UI.toast(`★ 成就解锁「${a.name}」· ${a.desc}${a.buff?" · 永久加成 "+buffDesc(a.buff):""}`,"good");
       diary(`成就达成「${a.name}」`,day);UI.fx("medal")}}
   /* 目标达成后的无尽奖励：每 20k 营业额送一件随机道具（后期金币与进度的闭环） */
   let nextMs=S.flags.msItem||40000;
@@ -1056,13 +1063,13 @@ function tickDay(){
     const keys=Object.keys(CFG.ITEMS).filter(k=>!CFG.ITEMS[k].once||!(S.flags[k]||S.items[k]>0));
     const k=keys[Math.floor(rngf()*keys.length)]||"giftbox";
     S.items[k]=(S.items[k]||0)+1;S.flags.msItem=nextMs+20000;
-    UI.banner("🎁 里程碑奖励",`营业额突破 ${fmtY(nextMs)}，获得「${CFG.ITEMS[k].name}」×1`);
+    UI.banner("★ 里程碑奖励",`营业额破 ${fmtY(nextMs)} · 获得「${CFG.ITEMS[k].name}」×1`);
     diary(`累计营业额突破 ${fmtY(nextMs)}，平台寄来奖励道具「${CFG.ITEMS[k].name}」`,day);
     UI.fx("confetti",3);nextMs+=20000}
   /* 10) 月报（自由经营：只按月结算，不再强制终局） */
   if(day%30===0)diary(`开店满 ${day/30} 个月，累计营业额 ${fmtY(S.totalRevenue)}`,day);
   if((day)%30===0)UI.openMonth(day/30);
-  else if(orders-lost>0)UI.toast(`第${day}天：成交 ${orders-lost} 单，发货 ${shipped} 单`,"info");
+  else if(orders-lost>0)UI.toast(`◆ 第 ${day} 天 · 成交 ${orders-lost} 单 · 发货 ${shipped} 单`,"info");
   /* 11) 快递员取件演出 */
   if(S.shippedSincePickup>=6){S.shippedSincePickup=0;S.fx.push({t:"pickup"});}
   /* 12) 破产判定：每天首次可看视频拿应急金自救，之后正常破产 */
@@ -1079,131 +1086,131 @@ const DECK=[
   {id:"influencer",w:3,t:"🤝 达人求合作",d:"一位腰部达人想付费合作，开价 ¥500 推广你的在售商品。",
    opts:[
     {l:"签约合作（-¥500）",ok:s=>s.money>=500,f:()=>{S.money-=500;const p=pickSoldProduct();
-      if(p)p.heat+=28;S.fans+=60;return"合作视频小爆！主推商品热度 +28，粉丝 +60"}},
-    {l:"婉拒",f:()=>"省下了预算，但错过了一波曝光"}]},
+      if(p)p.heat+=28;S.fans+=60;return"◆ 合作视频小爆 · 热度 +28 · 粉丝 +60"}},
+    {l:"婉拒",f:()=>"◆ 省下预算 · 错过一波曝光"}]},
   {id:"clearance",w:3,t:"📦 供应商清仓",d:"长期合作的供应商搞清仓特惠：¥350 囤 50 件热销商品。",
    opts:[
     {l:"囤货（-¥350）",ok:s=>s.money>=350,f:()=>{S.money-=350;const p=pickSoldProduct();
-      if(!p)return"没有在售商品，钱白花了";p.stock+=50;return`「${p.name}」库存 +50，相当于半价补货`}},
-    {l:"错过",f:()=>"省下的钱留在账上"}]},
+      if(!p)return"✖ 没有在售商品 · 钱白花了";p.stock+=50;return`◆「${p.name}」库存 +50 · 相当于半价补货`}},
+    {l:"错过",f:()=>"◆ 省下的钱留在账上"}]},
   {id:"logistics",w:2,t:"🚚 物流集体投诉",d:"快递爆仓，一批顾客催单投诉，再拖要出大事。",
    opts:[
     {l:"切换顺丰补偿（-¥300）",ok:s=>s.money>=300,f:()=>{S.money-=300;S.rep=clamp(S.rep+0.25,1,5);
-      return"顾客收到补偿券，口碑 +0.25"}},
+      return"◆ 顾客收到补偿券 · 口碑 +0.25"}},
     {l:"让大家再等等",f:()=>{S.rep=clamp(S.rep-0.25,1,5);S.fans=Math.max(0,S.fans-20);
-      return"口碑 -0.25，掉粉 20……下次要早做预案"}}]},
+      return"✖ 口碑 -0.25 · 掉粉 20 · 下次要早做预案"}}]},
   {id:"rival",w:2,t:"🏷 竞品降价突袭",d:"对头店铺半夜降价，你的流量肉眼可见地变少了。",
    opts:[
     {l:"跟进促销（-¥200，2 天曝光 ×1.5）",ok:s=>s.money>=200,f:()=>{S.money-=200;S.promoDays=Math.max(S.promoDays,2);
-      return"价格战打响！2 天内曝光 ×1.5"}},
+      return"◆ 价格战打响 · 2 天曝光 ×1.5"}},
     {l:"硬扛不打价格战",f:()=>{if(rngf()<0.5){S.rep=clamp(S.rep+0.15,1,5);
-      return"顾客认可你的品质，口碑 +0.15"}S.rep=clamp(S.rep-0.2,1,5);
-      return"客流被抢走不少，口碑 -0.2"}}]},
+      return"◆ 顾客认可品质 · 口碑 +0.15"}S.rep=clamp(S.rep-0.2,1,5);
+      return"✖ 客流被抢 · 口碑 -0.2"}}]},
   {id:"event101",w:2,t:"💼 平台小二邀约",d:"平台活动位还剩最后一个，报名费 ¥400，为期 2 天。",
    opts:[
     {l:"报名（-¥400，2 天曝光 ×2）",ok:s=>s.money>=400,f:()=>{S.money-=400;S.promoDays=Math.max(S.promoDays,2);
-      return"上了活动首页，2 天内曝光 ×2！"}},
-    {l:"放弃坑位",f:()=>"把机会让给了同行"}]},
+      return"◆ 上了活动首页 · 2 天曝光 ×2"}},
+    {l:"放弃坑位",f:()=>"◆ 机会让给同行"}]},
   {id:"fansday",w:2,t:"💝 老客回馈日",d:"粉丝群喊着想搞回馈：免费送出 10 件商品答谢老客。",
    opts:[
     {l:"送！（库存 -10）",ok:s=>S.products.filter(p=>p.devLeft<=0).reduce((a,p)=>a+p.stock,0)>=10,
      f:()=>{let n=10;S.products.filter(p=>p.devLeft<=0&&p.stock>0).forEach(p=>{
        if(n>0){const k=Math.min(p.stock,n);p.stock-=k;n-=k}});
-       S.rep=clamp(S.rep+0.3,1,5);S.fans+=40;return"晒单刷屏！口碑 +0.3，粉丝 +40"}},
-    {l:"这次先算了",f:()=>"库存要紧，粉丝表示理解"}]},
+       S.rep=clamp(S.rep+0.3,1,5);S.fans+=40;return"◆ 晒单刷屏 · 口碑 +0.3 · 粉丝 +40"}},
+    {l:"这次先算了",f:()=>"◆ 库存要紧 · 粉丝表示理解"}]},
   {id:"interview",w:2,t:"📰 本地媒体采访",d:"区电视台想报道你的创业故事（免费），可能带火也可能没人看。",
    opts:[
     {l:"接受采访",f:()=>{if(rngf()<0.6){S.rep=clamp(S.rep+0.2,1,5);S.fans+=50;
-      return"报道火了！口碑 +0.2，粉丝 +50"}return"节目冷门，没什么水花"}},
-    {l:"低调拒绝",f:()=>"继续闷声做生意"}]},
+      return"◆ 报道火了 · 口碑 +0.2 · 粉丝 +50"}return"◆ 节目冷门 · 没什么水花"}},
+    {l:"低调拒绝",f:()=>"◆ 继续闷声做生意"}]},
   {id:"audit",w:1,t:"🧾 平台抽查",d:"平台抽查售后响应速度，口碑越差罚款风险越高。",
    opts:[
     {l:"主动整改（-¥150）",ok:s=>s.money>=150,f:()=>{S.money-=150;S.rep=clamp(S.rep+0.1,1,5);
-      return"整改到位还拿了服务徽章，口碑 +0.1"}},
-    {l:"置之不理",f:()=>{if(rngf()<0.5){S.money-=300;return"被判定响应不达标，罚款 ¥300"}
-      return"侥幸过关，没人来找麻烦"}}]},
+      return"◆ 整改到位 · 拿到服务徽章 · 口碑 +0.1"}},
+    {l:"置之不理",f:()=>{if(rngf()<0.5){S.money-=300;return"✖ 响应不达标 · 罚款 ¥300"}
+      return"◆ 侥幸过关 · 没人来找麻烦"}}]},
   /* ---- 中后期事件（v5 扩充） ---- */
   {id:"meme",w:2,t:"🔥 热搜梗爆发",d:"你的商品梗上了热搜！能不能接住这泼天流量？",
    opts:[
     {l:"连夜追热点（-¥200）",ok:s=>s.money>=200,f:()=>{S.money-=200;const p=pickSoldProduct();
-      if(!p)return"没在售商品，流量错过了";p.heat+=60;return`反应神速！「${p.name}」热度 +60`}},
-    {l:"围观就好",f:()=>"热度三天就退，不追也罢"}]},
+      if(!p)return"✖ 没有在售商品 · 流量错过了";p.heat+=60;return`◆ 反应神速 ·「${p.name}」热度 +60`}},
+    {l:"围观就好",f:()=>"◆ 热度三天就退 · 不追也罢"}]},
   {id:"factory",w:2,t:"🏭 工厂直供",d:"合作工厂年底冲量：¥600 直供全部在售商品各 +40 库存。",
    opts:[
     {l:"囤一笔（-¥600）",ok:s=>s.money>=600,f:()=>{S.money-=600;let n=0;
       S.products.forEach(p=>{if(p.devLeft<=0){p.stock+=60;n++}});
-      return n?`${n} 款商品库存 +60，半年不用愁`:"没有在售商品，钱白花了"}},
-    {l:"仓库满了",f:()=>"省下预算，账上更踏实"}]},
+      return n?`◆ ${n} 款商品库存 +60 · 半年不用愁`:"✖ 没有在售商品 · 钱白花了"}},
+    {l:"仓库满了",f:()=>"◆ 省下预算 · 账上更踏实"}]},
   {id:"poach",w:2,t:"🎯 竞对来挖角",d:"同行盯上了你的员工，开出双倍薪水。",
    opts:[
     {l:"加薪挽留（-¥300）",ok:s=>s.money>=300&&S.staff.length>0,f:()=>{S.money-=300;
       const s=S.staff[Math.floor(rngf()*S.staff.length)];s.exp+=60;checkLevel(s);
-      return`「${s.name}」被诚意打动，经验 +60`}},
+      return`◆「${s.name}」被诚意打动 · 经验 +60`}},
     {l:"爱走不走",f:()=>{if(S.staff.length){const s=S.staff[Math.floor(rngf()*S.staff.length)];
-      s.fatigue=clamp((s.fatigue||0)+25,0,100);return`「${s.name}」有点心寒，疲劳 +25`}return"暂时没人被挖"}}]},
+      s.fatigue=clamp((s.fatigue||0)+25,0,100);return`✖「${s.name}」有点心寒 · 疲劳 +25`}return"◆ 暂时没人被挖"}}]},
   {id:"rumor",w:2,t:"📉 负面舆情",d:"有博主发视频吐槽你的售后慢，评论区吵起来了。",
    opts:[
     {l:"公开道歉并补偿（-¥400）",ok:s=>s.money>=400,f:()=>{S.money-=400;S.rep=clamp(S.rep+0.1,1,5);
-      return"真诚回应赢得好感，口碑 +0.1"}},
-    {l:"冷处理",f:()=>{S.rep=clamp(S.rep-0.6,1,5);return"舆论发酵，口碑 -0.6"}}]},
+      return"◆ 真诚回应赢得好感 · 口碑 +0.1"}},
+    {l:"冷处理",f:()=>{S.rep=clamp(S.rep-0.6,1,5);return"✖ 舆论发酵 · 口碑 -0.6"}}]},
   {id:"guild",w:1,t:"🤝 商会互助邀请",d:"本地电商商会邀请你加入：资源互通，共同成长。",
    opts:[
     {l:"加入商会（-¥500）",ok:s=>s.money>=500,f:()=>{S.money-=500;S.rep=clamp(S.rep+0.4,1,5);S.fans+=150;
-      return"商会人脉给力！口碑 +0.4，粉丝 +150"}},
-    {l:"独自打拼",f:()=>"省下会费，单干也自在"}]},
+      return"◆ 商会人脉给力 · 口碑 +0.4 · 粉丝 +150"}},
+    {l:"独自打拼",f:()=>"◆ 省下会费 · 单干也自在"}]},
   {id:"doc",w:1,t:"🎬 纪录片跟拍",d:"创作团队想跟拍小店 30 天，记录创业日常。",
    opts:[
     {l:"欢迎镜头",f:()=>{S.rep=clamp(S.rep+0.15,1,5);S.fans+=100;
-      return"真实感圈粉！口碑 +0.15，粉丝 +100"}},
-    {l:"只想安静做生意",f:()=>"镜头离开，小店回归平静"}]},
+      return"◆ 真实感圈粉 · 口碑 +0.15 · 粉丝 +100"}},
+    {l:"只想安静做生意",f:()=>"◆ 镜头离开 · 小店回归平静"}]},
   /* ---- 深度机制事件（v6：持续影响 / 周期节奏） ---- */
   {id:"promofest",w:0,t:"🎪 平台大促日",d:"今天是平台大促日！流量池全开，抢坑位烧推广还是稳扎稳打？（每 15 天一次）",
    opts:[
     {l:"抢占坑位（-¥600，3 天曝光 ×2.5）",ok:s=>s.money>=600,f:()=>{S.money-=600;S.promoDays=Math.max(S.promoDays,3);
-      return"大促流量吃到撑！3 天内曝光 ×2.5"}},
+      return"◆ 大促流量吃到饱 · 3 天曝光 ×2.5"}},
     {l:"小投入蹭流量（-¥200，2 天曝光 ×1.6）",ok:s=>s.money>=200,f:()=>{S.money-=200;S.promoDays=Math.max(S.promoDays,2);
-      return"蹭到大促尾巴，2 天内曝光 ×1.6"}},
-    {l:"大促躺平，不掺和",f:()=>{S.fans=Math.max(0,S.fans-30);return"同行都在抢流量，你掉粉 30……"}}]},
+      return"◆ 蹭到大促尾巴 · 2 天曝光 ×1.6"}},
+    {l:"大促躺平，不掺和",f:()=>{S.fans=Math.max(0,S.fans-30);return"✖ 同行都在抢流量 · 掉粉 30"}}]},
   {id:"wageup",w:1,t:"📢 员工联名涨薪",d:"团队集体递上涨薪申请书：不加薪怕人心散，加了成本压力大。",
    opts:[
     {l:"全员涨薪 50%（持续 30 天）",f:()=>{S.flags.wageUp=S.day+30;S.staff.forEach(s=>{s.fatigue=clamp(s.fatigue-30,0,100);s.exp+=30});
-      S.staff.forEach(checkLevel);return"士气大振！30 天内工资 ×1.5，全员疲劳 -30、经验 +30"}},
+      S.staff.forEach(checkLevel);return"◆ 士气大振 · 30 天工资 ×1.5 · 全员疲劳 -30 · 经验 +30"}},
     {l:"画饼安抚：涨薪没有，未来可期",f:()=>{S.staff.forEach(s=>s.fatigue=clamp(s.fatigue+15,0,100));
-      return"大家表面答应，疲劳 +15……"}}]},
+      return"✖ 表面答应 · 全员疲劳 +15"}}]},
   {id:"copycat",w:1,t:"👓 山寨店打假",d:"发现一家山寨店像素级抄袭你的招牌商品，还卖得更便宜！",
    opts:[
     {l:"硬刚到底：发律师函（-¥500）",ok:s=>s.money>=500,f:()=>{S.money-=500;
-      if(rngf()<0.75){S.rep=clamp(S.rep+0.4,1,5);S.fans+=200;return"打假成功登上热搜！口碑 +0.4，粉丝 +200"}
-      return"维权拉锯战耗时耗力，暂无战果"}},
-    {l:"用品质说话，不打口水仗",f:()=>{S.rep=clamp(S.rep+0.1,1,5);return"老客认准正品，口碑 +0.1"}}]},
+      if(rngf()<0.75){S.rep=clamp(S.rep+0.4,1,5);S.fans+=200;return"★ 打假成功 · 登上热搜 · 口碑 +0.4 · 粉丝 +200"}
+      return"◆ 维权拉锯 · 耗时耗力 · 暂无战果"}},
+    {l:"用品质说话，不打口水仗",f:()=>{S.rep=clamp(S.rep+0.1,1,5);return"◆ 老客认准正品 · 口碑 +0.1"}}]},
   {id:"surge",w:1,t:"🌊 平台流量暴涨",d:"平台服务器今天抽风放量，全网曝光暴涨——接住这波泼天富贵！",
    opts:[
     {l:"全速运转接流量（全员疲劳 +15）",f:()=>{S.promoDays=Math.max(S.promoDays,2);S.staff.forEach(s=>s.fatigue=clamp(s.fatigue+15,0,100));
-      return"全员加班接单！2 天曝光 ×2，但大家累坏了"}},
-    {l:"保守营业，不追流量",f:()=>{S.rep=clamp(S.rep+0.05,1,5);return"稳字当头，口碑 +0.05"}}]},
+      return"◆ 全员加班接单 · 2 天曝光 ×2 · 疲劳 +15"}},
+    {l:"保守营业，不追流量",f:()=>{S.rep=clamp(S.rep+0.05,1,5);return"◆ 稳字当头 · 口碑 +0.05"}}]},
   {id:"blackout",w:1,t:"⚡ 仓库突发停电",d:"仓库半夜停电，一批库存商品面临损耗风险。",
    opts:[
-    {l:"连夜抢修（-¥400）",ok:s=>s.money>=400,f:()=>{S.money-=400;return"电力恢复！库存安然无恙"}},
+    {l:"连夜抢修（-¥400）",ok:s=>s.money>=400,f:()=>{S.money-=400;return"◆ 电力恢复 · 库存安然无恙"}},
     {l:"听天由命",f:()=>{let lost=0;S.products.forEach(p=>{if(p.devLeft<=0&&p.stock>0){const k=Math.ceil(p.stock*0.3);p.stock-=k;lost+=k}});
-      return lost?`损耗 ${lost} 件库存……`:"运气不错，没在售库存受损"}}]},
+      return lost?`✖ 停电损耗 ${lost} 件库存`:"◆ 运气不错 · 没在售库存受损"}}]},
   {id:"topstreamer",w:1,t:"🌟 头部达人空降",d:"百万粉的头部主播路过你的直播间，愿意免费帮你带 2 天货！",
    opts:[
     {l:"求之不得！（2 天转化 +6%）",f:()=>{S.flags.giftLive=S.day+2;S.fans+=150;
-      return"头部效应炸裂！2 天内转化 +6%，粉丝 +150"}},
-    {l:"婉拒：风格不合",f:()=>{return"错过一波泼天流量……"}}]},
+      return"★ 头部效应炸裂 · 2 天转化 +6% · 粉丝 +150"}},
+    {l:"婉拒：风格不合",f:()=>{return"◆ 错过一波泼天流量"}}]},
   {id:"rentup",w:1,t:"🏚 房东涨租",d:"房东笑眯眯地递来通知：地段火了，租金每月要涨。",
    opts:[
-    {l:"咬牙接受（日常成本永久 +60/天）",f:()=>{S.flags.rentUp=true;return"签了新约。成本上去了，但地段也更值钱"}},
+    {l:"咬牙接受（日常成本永久 +60/天）",f:()=>{S.flags.rentUp=true;return"◆ 签了新约 · 成本 +60/天 · 地段更值钱"}},
     {l:"搬去偏远仓库（口碑 -0.3，不涨租）",f:()=>{S.rep=clamp(S.rep-0.3,1,5);
-      return"搬到了城中村，老客找不到门，口碑 -0.3"}}]},
+      return"✖ 搬到城中村 · 老客找不到门 · 口碑 -0.3"}}]},
   {id:"charity",w:1,t:"💖 公益捐助倡议",d:"慈善机构邀请你捐一批商品给山区，宣传效应未知。",
    opts:[
     {l:"捐出 20 件商品（库存 -20）",ok:s=>S.products.filter(p=>p.devLeft<=0).reduce((a,p)=>a+p.stock,0)>=20,
      f:()=>{let n=20;S.products.filter(p=>p.devLeft<=0&&p.stock>0).forEach(p=>{
        if(n>0){const k=Math.min(p.stock,n);p.stock-=k;n-=k}});
        S.rep=clamp(S.rep+0.5,1,5);S.fans+=250;
-       return"善举被广泛报道！口碑 +0.5，粉丝 +250"}},
-    {l:"默默转发支持一下",f:()=>{S.rep=clamp(S.rep+0.05,1,5);return"心意到了，口碑 +0.05"}}]},
+       return"★ 善举被广泛报道 · 口碑 +0.5 · 粉丝 +250"}},
+    {l:"默默转发支持一下",f:()=>{S.rep=clamp(S.rep+0.05,1,5);return"◆ 心意到了 · 口碑 +0.05"}}]},
   /* 美工部玩法：美工 × 运营随机冲突（仅两种岗位都在编时随机触发，w:0 不进随机池） */
   {id:"artclash",w:0,t:"🎨 部门冲突：美工 × 运营",d:"美工和运营吵翻了！运营嫌素材「太艺术、没卖点」要大改，美工护稿说运营根本不懂审美。你来断。",
    opts:[
@@ -1211,16 +1218,16 @@ const DECK=[
      f:()=>{const o=S.staff.find(s=>s.role==="operator");
        S.products.forEach(p=>{if(p.artLeft>0)p.artQ=(p.artQ||0)+3});
        if(o)o.fatigue=clamp(o.fatigue+15,0,100);
-       return"按美工的稿子走，素材偷偷加了细节（质量 ↑）；运营憋着气干活（疲劳 +15）"}},
+       return"◆ 按美工的稿子走 · 素材质量 ▲ · 运营疲劳 +15"}},
     {l:"听运营的（赶工提前上架，素材降级）",
      f:()=>{const d=S.staff.find(s=>s.role==="designer");
        S.products.forEach(p=>{if(p.artLeft>0){p.artLeft=Math.max(1,p.artLeft-1);p.artQ=(p.artQ||0)-2}});
        if(d)d.fatigue=clamp(d.fatigue+20,0,100);
-       return"素材连夜赶工提前交稿（上架提速），但美工心很累（疲劳 +20）"}},
+       return"◆ 素材连夜赶工 · 上架提速 · 美工疲劳 +20"}},
     {l:"组局团建（-¥250，全员息怒）",ok:s=>s.money>=250,
      f:()=>{S.money-=250;S.staff.forEach(s=>s.fatigue=clamp(s.fatigue-15,0,100));
        S.products.forEach(p=>{if(p.artLeft>0)p.artQ=(p.artQ||0)+1});
-       return"一顿火锅下去两人和好了：全员疲劳 -15，素材顺手补了两笔细节"}},
+       return"◆ 一顿火锅化解恩怨 · 全员疲劳 -15 · 素材细节 +1"}},
    ]},
 ];
 function triggerDeck(forceId){
@@ -1231,7 +1238,7 @@ function triggerDeck(forceId){
   S.pendingEvent=ev;                          // 事件挂起，等 NPC 上门后再弹面板
   spawnVisitor(ev.id);                        // 事件 NPC 从门口走入（活人感）
   AUD.play("doorbell");
-  UI.toast("🔔 有人上门找老板！","info");
+  UI.toast("◆ 有人敲门 · 找老板","info");
 }
 
 /* ---- 公司级大事记：里程碑触发、深度决策、改变经营走向（区别于普通事件卡） ---- */
@@ -1241,56 +1248,58 @@ const BIG_EVENTS=[
   opts:[
    {l:"对赌协议：立拿 ¥15,000（60 天内营业额冲 ¥100,000，成功再奖 ¥25,000，失败口碑 -0.8）",
     f:()=>{S.money+=15000;S.flags.be.vc="bet";S.flags.beBet={end:S.day+60};
-      return"签约！资金到账，对赌 60 天倒计时开始"}},
+      return"◆ 签约 · 资金到账 · 对赌 60 天倒计时开始"}},
    {l:"小额入股：立拿 ¥6,000，每月分红 -¥300",
-    f:()=>{S.money+=6000;S.flags.be.vc="share";return"投资人入股完成，每月发薪日分红 ¥300"}},
+    f:()=>{S.money+=6000;S.flags.be.vc="share";return"◆ 投资人入股完成 · 每月分红 ¥300"}},
    {l:"婉拒：小店要独立自主",
-    f:()=>{S.rep=clamp(S.rep+0.2,1,5);return"投资人欣赏你的骨气，口碑 +0.2"}}]},
+    f:()=>{S.rep=clamp(S.rep+0.2,1,5);return"◆ 投资人欣赏你的骨气 · 口碑 +0.2"}}]},
  {id:"tax",t:"🧾 税务稽查上门",d:"税务部门例行检查电商经营数据。规范申报还是动歪脑筋？后果自负。",
   cond:s=>s.totalRevenue>=30000&&!s.flags.be.tax,
   opts:[
    {l:"如实申报：补税 10% 现金（上限 ¥4,000）",
     f:()=>{const tax=Math.min(Math.round(S.money*0.1),4000);S.money-=tax;
-      S.rep=clamp(S.rep+0.3,1,5);return`诚信经营，补税 ${fmtY(tax)}，口碑 +0.3`}},
+      S.rep=clamp(S.rep+0.3,1,5);return`◆ 诚信经营 · 补税 ${fmtY(tax)} · 口碑 +0.3`}},
    {l:"找代账筹划：-¥600，有小概率露馅",
     ok:s=>s.money>=600,f:()=>{S.money-=600;
-      if(rngf()<0.3){S.money=Math.max(0,S.money-2000);S.rep=clamp(S.rep-0.3,1,5);return"筹划露馅，罚款 ¥2,000，口碑 -0.3"}
-      S.rep=clamp(S.rep+0.1,1,5);return"合规筹划过关，口碑 +0.1"}},
+      if(rngf()<0.3){S.money=Math.max(0,S.money-2000);S.rep=clamp(S.rep-0.3,1,5);return"✖ 筹划露馅 · 罚款 ¥2,000 · 口碑 -0.3"}
+      S.rep=clamp(S.rep+0.1,1,5);return"◆ 合规筹划过关 · 口碑 +0.1"}},
    {l:"硬扛不报：赌一把",
     f:()=>{if(rngf()<0.7){S.money=Math.max(0,S.money-4000);S.rep=clamp(S.rep-0.5,1,5);
-        return"被查实偷漏税，重罚 ¥4,000，口碑 -0.5"}
-      return"侥幸蒙混过关……但别再心存侥幸"}}]},
+        return"✖ 查实偷漏税 · 重罚 ¥4,000 · 口碑 -0.5"}
+      return"◆ 侥幸蒙混过关 · 别再心存侥幸"}}]},
  {id:"gala",t:"🎊 员工提议办年会",d:"跟着你打拼的团队想办一场年会，犒劳每个人的辛苦。办不办、怎么办？",
   cond:s=>s.day>=45&&s.staff.length>=2&&!s.flags.be.gala,
   opts:[
    {l:"大操大办：-¥800，全员疲劳清零、经验 +25",
     ok:s=>s.money>=800,f:()=>{S.money-=800;S.staff.forEach(s=>{s.fatigue=0;s.exp+=25});
-      S.staff.forEach(checkLevel);return"年会圆满！全员满血复活、经验 +25"}},
+      S.staff.forEach(checkLevel);return"★ 年会圆满 · 全员满血复活 · 经验 +25"}},
    {l:"简单聚餐：-¥200，全员疲劳 -40",
     ok:s=>s.money>=200,f:()=>{S.money-=200;S.staff.forEach(s=>s.fatigue=clamp(s.fatigue-40,0,100));
-      return"热热闹闹吃了一顿，疲劳 -40"}},
+      return"◆ 热热闹闹吃了一顿 · 全员疲劳 -40"}},
    {l:"今年就省了吧",f:()=>{S.staff.forEach(s=>s.fatigue=clamp(s.fatigue+10,0,100));
-      return"大家有点失落，疲劳 +10"}}]},
+      return"✖ 大家有点失落 · 疲劳 +10"}}]},
  {id:"merger",t:"🖤 巨头收购邀约",d:"大平台带着巨额报价来了：卖掉店铺就此上岸，或拒绝收购继续征战。",
   cond:s=>s.officeLevel>=3&&!s.flags.be.merger,
   opts:[
    {l:"拒绝收购：这里是我的梦想",
     f:()=>{S.rep=clamp(S.rep+0.3,1,5);S.fans+=300;
-      return"「小店虽小，是我的招牌」——口碑 +0.3，粉丝 +300"}},
+      return"◆「小店虽小，是我的招牌」· 口碑 +0.3 · 粉丝 +300"}},
    {l:"接受收购：提前结算创业成果",
     f:()=>{S.flags.be.merger="sold";S.flags.acquired=true;UI.openEnd("acquired");return null}}]},
 ];
 function checkBigEvents(){
+  if(S.day-(S.flags.beLastDay||0)<5)return;   // 大事记间隔至少 5 天，避免连续上门
   for(const ev of BIG_EVENTS){
     if(ev.cond(S)){
+      S.flags.beLastDay=S.day;
       S.pendingEvent=ev;spawnVisitor(ev.id);AUD.play("doorbell");
-      UI.toast("🔔 有重要访客上门！","info");return}}}
+      UI.toast("◆ 重要访客到店","info");return}}}
 function settleBet(){   // 对赌协议到期结算
   const ok=S.totalRevenue>=100000;
   if(ok){S.money+=25000;S.rep=clamp(S.rep+0.5,1,5);
-    UI.banner("🏆 对赌成功",`营业额达标！投资人追加奖励 ¥25,000`);diary("对赌协议达标，获得追加投资 ¥25,000",S.day);UI.fx("confetti",5)}
+    UI.banner("★ 对赌成功",`营业额达标 · 追加奖励 ¥25,000`);diary("对赌协议达标，获得追加投资 ¥25,000",S.day);UI.fx("confetti",5)}
   else{S.rep=clamp(S.rep-0.8,1,5);
-    UI.banner("😞 对赌失败","营业额未达标，口碑 -0.8");diary("对赌协议失败，业界声誉受损",S.day)}
+    UI.banner("✖ 对赌失败","营业额未达标 · 口碑 -0.8");diary("对赌协议失败，业界声誉受损",S.day)}
   S.flags.beBet=null}
 
 /* ============================ RENDER ============================ */
@@ -1956,17 +1965,17 @@ const UI={
         <span style="flex:1"><b>${it.name}</b><div class="num">${it.desc}</div></span>
         <button class="pxbtn sm ${S.money>=it.cost&&!bought?"green":"gray"}" ${bought?"disabled":""} onclick="UI.buyItem('${k}')">${bought?"已拥有":fmtY(it.cost)}</button></div>`}).join("");
     this.open(`<h2>🛒 道具商店</h2>
-      <div class="desc">大钱花在刀刃上：冲量、救火、口碑、产能，各取所需。</div>
+      <div class="desc">◆ 大钱花在刀刃上 · 冲量 / 救火 / 口碑 / 产能，各取所需</div>
       ${dur.length?`<div class="progrow" style="color:var(--red2);font-weight:800;margin-bottom:6px">生效中：${dur.join("｜")}</div>`:""}
       <h2 style="font-size:14px">🎒 背包</h2>${bag}
       <h2 style="font-size:14px">🛍 购买</h2>${shop}
       <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`)},
-  buyItem(k){if(buyItem(k)){this.refresh();this.openItems()}else this.toast("资金不足","bad")},
+  buyItem(k){if(buyItem(k)){this.refresh();this.openItems()}else this.toast("✖ 资金不足","bad")},
   useItemUI(k){const r=useItem(k);if(r)this.toast(r,"bad");this.refresh();this.openItems()},
   openItemTarget(k){
     const ps=S.products.filter(p=>p.devLeft<=0);
-    if(!ps.length){this.toast("没有在售商品","bad");return}
-    this.open(`<h2>🧪 爆款秘籍 → 选品</h2><div class="desc">目标商品热度直接拉满 100——配合直播选品就是 4 星完美档。</div>
+    if(!ps.length){this.toast("✖ 没有在售商品 · 先去研发","bad");return}
+    this.open(`<h2>🧪 爆款秘籍 → 选品</h2><div class="desc">◆ 目标商品热度直接拉满 100 · 配合直播选品即 4 星完美档</div>
       ${ps.map(p=>`<div class="progrow" style="margin-bottom:4px">
         <span style="flex:1"><b>${p.name}</b>（当前热度 ${Math.round(p.heat)}）</span>
         <button class="pxbtn sm" style="background:#c2487e" onclick="UI.useSecret('${k}',${p.id})">就是它</button></div>`).join("")}
@@ -1981,7 +1990,7 @@ const UI={
 
   /* ---- 决策面板 ---- */
   openAd(){
-    const a=S.adDays>0?`<div class="desc">当前：${CFG.AD[S.adLevel].name}，剩余 ${S.adDays} 天</div>`:`<div class="desc">当前：自然流量</div>`;
+    const a=S.adDays>0?`<div class="desc">◆ 当前投流：${CFG.AD[S.adLevel].name} · 剩余 ${S.adDays} 天</div>`:`<div class="desc">◆ 当前投流：自然流量</div>`;
     let cards="";
     for(let i=1;i<CFG.AD.length;i++){const ad=CFG.AD[i];
       cards+=`<div class="card"><h3>${ad.name} <span class="tag">预付${ad.days}天</span></h3>
@@ -1990,7 +1999,7 @@ const UI={
     cards+=`<div class="card" style="border-color:var(--blue)"><h3>📺 视频加速</h3>
       <div class="num">看一条视频：<b>明日投流曝光 ×2</b>${S.adFx.adBoost>0?"<br><span style='color:var(--green)'>明天结算生效！</span>":""}</div>
       <button class="pxbtn sm blue" onclick="UI.doAdBoost('adBoost')" ${S.adFx.adBoost>0?"disabled":""}>看视频解锁</button></div>`;
-    this.open(`<h2>📣 投流推广</h2>${a}<div class="desc">投流按「倍率」放大总曝光——盘子越大、回报越猛。转化率随商品热度上涨，先造爆款再砸钱最划算。</div>
+    this.open(`<h2>📣 投流推广</h2>${a}<div class="desc">◆ 投流按「倍率」放大总曝光 · 盘子越大回报越猛<br>◆ 转化率随商品热度上涨 · 先造爆款再砸钱最划算</div>
       <div class="cardrow">${cards}</div>
       <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);
   },
@@ -1999,8 +2008,8 @@ const UI={
     const cap=shipCapacity();
     let wk="";for(let i=0;i<CFG.WORKER_MAX;i++)wk+=`<span style="font-size:18px">${i<S.workers?"🧑":"🧑‍🦱"}</span>`;
     this.open(`<h2>📦 发货管理</h2>
-      <div class="desc">待发货 <b style="color:${S.pending.length>CFG.PEND_SOFT?'#b23a32':'#3a2a20'}">${S.pending.length}</b> 单 ｜ 当前产能 <b>${cap} 单/天</b> ｜ 日常人力成本 ${fmtY(dailyCost())}/天<br>
-      积压 >${CFG.PEND_SOFT} 单开始掉口碑，>${CFG.PEND_HARD} 单严重掉口碑！</div>
+      <div class="desc">◆ 待发货 <b style="color:${S.pending.length>CFG.PEND_SOFT?'#b23a32':'#3a2a20'}">${S.pending.length}</b> 单 · 产能 <b>${cap} 单/天</b> · 人力 ${fmtY(dailyCost())}/天<br>
+      ◆ 积压 &gt;${CFG.PEND_SOFT} 单口碑 ▼ · &gt;${CFG.PEND_HARD} 单口碑 ▼▼</div>
       <div class="cardrow">
         <div class="card"><h3>临时工 ${S.workers}/${CFG.WORKER_MAX}</h3><div class="num">每人 +${CFG.WORKER_SHIP} 单/天<br>日薪 ${fmtY(CFG.WORKER_PAY)}/人</div>
           <div>${wk}</div>
@@ -2020,17 +2029,17 @@ const UI={
   doSaas(){toggleSaas();this.refresh();this.openShip()},
   openTickets(){
     let body="";
-    if(!S.tickets.length)body=`<div class="desc">暂无售后工单～口碑越好，工单越少。</div>`;
+    if(!S.tickets.length)body=`<div class="desc">◆ 暂无售后工单 · 口碑越好，工单越少</div>`;
     else S.tickets.forEach(t=>{
       body+=`<div class="card ticket"><h3>${t.type} <span class="tag" style="background:${t.daysLeft<=1?'#d94f45':'#f2a24b'}">剩 ${t.daysLeft} 天</span></h3>
-        <div class="num">涉及：${t.product} ｜ 价值 ${fmtY(t.price)}<br>逾期将自动退款并重创口碑</div>
+        <div class="num">◆ 商品「${t.product}」· 价值 ${fmtY(t.price)}<br>◆ 逾期自动退款 · 口碑重创</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="pxbtn green sm" onclick="UI.doTicket(${t.id},'refund')">全额退款</button>
           <button class="pxbtn blue sm" onclick="UI.doTicket(${t.id},'resend')">补发换货</button>
           <button class="pxbtn sm" style="background:#9b8f7a" onclick="UI.doTicket(${t.id},'deny')">拒绝</button>
         </div></div>`;});
     this.open(`<h2>🛠 售后处理</h2>
-      <div class="desc">退款保口碑但亏钱；补发折中；拒绝保钱但口碑大掉（还掉粉）。</div>${body}
+      <div class="desc">◆ 退款保口碑但亏钱 · 补发折中 · 拒绝保钱但掉粉</div>${body}
       <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);
   },
   doTicket(id,act){if(resolveTicket(id,act)){this.refresh();this.openTickets()}},
@@ -2049,12 +2058,12 @@ const UI={
     CFG.HIDDEN.forEach((c,i)=>{
       const fee=devFee(c);
       if(c.cond(S))hcats+=`<div class="card" style="border-color:${c.color}"><h3 style="color:${c.color}">✨${c.name}</h3>
-        <div class="num">研发费 ${fmtY(fee)} · 3天<br>成本¥${c.cost} → 售价¥${c.price}<br>初始热度 ${c.heat}（高风险高客单）</div>
+        <div class="num">研发费 ${fmtY(fee)} · 3天<br>成本¥${c.cost} → 售价¥${c.price}<br>初始热度 ${c.heat} · 高风险高客单</div>
         <button class="pxbtn sm" onclick="UI.openDevPlan(${i},true)" ${S.money<fee?"disabled":""}>研发</button></div>`;
       else hcats+=`<div class="card" style="opacity:.6"><h3>🔒 ？？？</h3>
         <div class="num">隐藏品类<br>${c.hint}</div></div>`;});
     let own="";
-    if(!S.products.length)own=`<div class="desc">暂无在售商品！先研发或等待新品上架。</div>`;
+    if(!S.products.length)own=`<div class="desc">◆ 暂无在售商品 · 先研发一款</div>`;
     S.products.forEach(p=>{
       const dev=p.devLeft>0,art=p.artLeft>0;
       const dsg=S.staff.find(s=>s.role==="designer");
@@ -2068,7 +2077,7 @@ const UI={
           <button class="pxbtn sm" style="background:#9b8f7a" onclick="UI.doDelist(${p.id})">下架</button>`}
         </div></div>`;});
     this.open(`<h2>🆕 商品与研发</h2>
-      <div class="desc">在售上限 ${CFG.MAX_PRODUCTS} 个（超出自动淘汰热度最低者）｜<b>品类按梯队解锁</b>：累计营业额/称号达标才能研发下一档 ｜热度自然退烧，<b>卖得越火爆退烧越快</b>——持续上新、拉开品类梯度才是长胜之道！</div>
+      <div class="desc">◆ 在售上限 ${CFG.MAX_PRODUCTS} 款 · 超出自动淘汰热度最低者<br>◆ 热度自然退烧，<b>卖得越火退得越快</b> —— 持续上新、拉开品类梯度才是长胜之道<br>◆ 品类按梯队解锁：累计营业额 / 称号达标才能研发下一档</div>
       <h2 style="font-size:14px">🧪 研发新品</h2><div class="cardrow">${cats}${hcats}</div>
       <h2 style="font-size:14px">🛒 在售商品</h2><div class="cardrow">${own}</div>
       <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);
@@ -2087,10 +2096,10 @@ const UI={
     const devCost=Math.ceil(devFee(c)*D.qc[s.qc].costMult),preCost=D.pre[s.pre].cost;
     const unitCost=Math.round(c.cost*D.supp[s.supp].costMult);
     this.open(`<h2>🧪「${c.name}」开发方案${hid?' <span class="tag">隐藏品类</span>':""}${repN?` <span class="tag" style="background:var(--red)">内卷 ×${(1+repN*0.6).toFixed(1)}</span>`:""}</h2>
-      <div class="desc">${hid?"高风险高客单的隐藏赛道：":"三步决策决定这款产品的基因："}品质换转化，品控换口碑，预热换声势。</div>
-      ${grp("🏭 供应商",D.supp,"supp","决定进货成本与品质（影响转化/售后率）")}
-      ${grp("🔍 品控标准",D.qc,"qc","出厂前检查多严？")}
-      ${grp("📣 上市预热",D.pre,"pre","首发声势")}
+      <div class="desc">◆ 品质换转化 · 品控换口碑 · 预热换声势${hid?"<br>◆ 隐藏品类：高风险、高客单，一步错步步错":""}</div>
+      ${grp("🏭 供应商",D.supp,"supp","◆ 决定进货价与品质（影响转化 / 售后率）")}
+      ${grp("🔍 品控标准",D.qc,"qc","◆ 出厂前查多严？越严口碑越好，成本越高")}
+      ${grp("📣 上市预热",D.pre,"pre","◆ 首发声势，决定第一波热度")}
       <div class="progrow" style="margin:8px 0">💰 研发费 <b>${fmtY(devCost+preCost)}</b>（含品控/预热）｜进货价 ¥${unitCost} → 售价 ¥${c.price}</div>
       <div class="panelclose"><button class="pxbtn green" onclick="UI.doDevStart()" ${S.money<devCost+preCost?"disabled":""}>▶ 立项研发（3 天上架）</button>
       <button class="pxbtn gray sm" onclick="UI.openShop()">返回</button></div>`);
@@ -2107,20 +2116,20 @@ const UI={
   selStyle(k){this._lsty=k;this.openLive()},
   openLive(){
     if(S.fans<CFG.LIVE.UNLOCK_FANS){
-      this.open(`<h2>🔴 直播带货</h2><div class="desc">粉丝达到 <b>${CFG.LIVE.UNLOCK_FANS}</b> 后解锁直播间（当前 ${Math.floor(S.fans)}）。快去涨粉吧！</div>
+      this.open(`<h2>🔴 直播带货</h2><div class="desc">◆ 粉丝达 <b>${CFG.LIVE.UNLOCK_FANS}</b> 解锁直播间 · 当前 ${Math.floor(S.fans)}<br>◆ 先去涨粉，再谈开播</div>
       <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);return}
     if(S.live.active){
       const p=S.products.find(x=>x.id===S.live.pid);
       const st=CFG.STYLES[S.live.style]||CFG.STYLES.hawking, fit=S.live.fit;
       this.open(`<h2>🔴 直播中</h2>
-        <div class="desc">主推「${p?p.name:"？"}」｜ ${st.icon} ${st.name} ｜ 剩余 <b>${S.live.daysLeft}</b> 天<br>
-        选品评价：<span style="color:#e88f3c">${fit?"★".repeat(fit.stars)+"☆".repeat(4-fit.stars):""}</span> ${fit?fit.tag:""}<br>
-        效果：曝光 +${CFG.LIVE.EXPO+(st.expo||0)+staffAnchorBonus()}/天 ｜ 主推热度 +${CFG.LIVE.HEAT}/天 ｜ 转化率 +${((CFG.LIVE.CONV+(fit?fit.conv:0)+st.conv)*100).toFixed(1)}% ｜ 场地 ${fmtY(CFG.LIVE.PER_DAY+(st.cost||0))}/天<br>
-        提示：点击「🎬 直播间」按钮可切到直播间看弹幕！</div>
+        <div class="desc">◆ 主推「${p?p.name:"？"}」· ${st.icon} ${st.name} · 剩余 <b>${S.live.daysLeft}</b> 天<br>
+        ◆ 选品评价 <span style="color:#e88f3c">${fit?"★".repeat(fit.stars)+"☆".repeat(4-fit.stars):""}</span> ${fit?fit.tag:""}<br>
+        ◆ 曝光 +${CFG.LIVE.EXPO+(st.expo||0)+staffAnchorBonus()}/天 · 热度 +${CFG.LIVE.HEAT}/天 · 转化 +${((CFG.LIVE.CONV+(fit?fit.conv:0)+st.conv)*100).toFixed(1)}% · 场地 ${fmtY(CFG.LIVE.PER_DAY+(st.cost||0))}/天<br>
+        ◆ 点「🎬 直播间」按钮可切过去看弹幕</div>
         <div class="panelclose"><button class="pxbtn sm" onclick="UI.doEndLive()">提前收播</button>
         <button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);return}
     if(S.live.cool>0){
-      this.open(`<h2>🔴 直播带货</h2><div class="desc">设备冷却中，${S.live.cool} 天后可再次开播。</div>
+      this.open(`<h2>🔴 直播带货</h2><div class="desc">◆ 设备冷却中 · ${S.live.cool} 天后可再播</div>
       <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);return}
     const sellable=S.products.filter(p=>p.devLeft<=0&&!p.artLeft);
     if(!sellable.some(p=>p.id===this._lp))this._lp=sellable.length?sellable[0].id:null;
@@ -2132,23 +2141,24 @@ const UI={
         <h3 style="color:${p.color}">${p.name} ${sel?"✅":""}</h3>
         <div class="num">热度 ${Math.round(p.heat)} ｜ 库存 ${p.stock}<br>
         <span style="color:#e88f3c">${"★".repeat(fit.stars)}${"☆".repeat(4-fit.stars)}</span> ${fit.tag}</div></div>`;});
-    if(!cards)cards=`<div class="desc">暂无在售商品可主推，先去研发新品吧。</div>`;
+    if(!cards)cards=`<div class="desc">◆ 暂无在售商品可主推 · 先去研发</div>`;
     let styles="";
     Object.entries(CFG.STYLES).forEach(([k,st])=>{
       const sel=k===this._lsty;
       styles+=`<div class="card" style="${sel?"border-color:var(--gold);background:#fff6df":"opacity:.82"};cursor:pointer" onclick="UI.selStyle('${k}')">
         <h3>${st.icon} ${st.name} ${sel?"✅":""}</h3><div class="num">${st.desc}</div></div>`;});
     this.open(`<h2>🔴 直播带货 · 选品</h2>
-      <div class="desc"><b>第①步</b>：点选主推商品（适配度越高效果越好，⚠缺货会翻车砸口碑）<br>
-      开播 ${CFG.LIVE.DAYS} 天 ｜ 预付 ${fmtY(CFG.LIVE.COST)} + 场地费/天 ｜ 直播中随机：弹幕爆炸 / 礼物打赏 / 口误翻车</div>
+      <div class="desc">◆ <b>第①步</b>：点选主推商品 · 适配度越高效果越好 · 缺货会翻车砸口碑<br>
+      ◆ 开播 ${CFG.LIVE.DAYS} 天 · 预付 ${fmtY(CFG.LIVE.COST)} + 场地费/天<br>
+      ◆ 直播中随机触发：弹幕爆炸 / 礼物打赏 / 口误翻车</div>
       <div class="cardrow">${cards}</div>
-      <h2 style="font-size:14px">第②步：选开播风格</h2>
+      <h2 style="font-size:14px">第②步 · 选开播风格</h2>
       <div class="cardrow">${styles}</div>
       <div class="panelclose"><button class="pxbtn" onclick="UI.doLiveStart()" ${S.money<CFG.LIVE.COST||!this._lp?"disabled":""}>🔴 开播！（${fmtY(CFG.LIVE.COST)}）</button>
       <button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);
   },
   doLiveStart(){
-    if(this._lp==null){UI.toast("先选一个主推商品","bad");return}
+    if(this._lp==null){UI.toast("✖ 先选主推商品","bad");return}
     if(startLive(this._lp,this._lsty)){this._lp=null;this._lsty=null;this.refresh();this.close()}},
   doEndLive(){endLive(true);this.refresh();this.openLive()},
 
@@ -2161,7 +2171,7 @@ const UI={
         <div class="num">${r.desc}<br>签约费 ${fmtY(r.hire)} · 日薪 ${fmtY(r.wage)}</div>
         <button class="pxbtn sm" onclick="UI.doHire('${k}')" ${S.money<r.hire||maxed?"disabled":""}>${maxed?"已满编":"招聘"}</button></div>`;});
     let list="";
-    if(!S.staff.length)list=`<div class="desc">还没有正式员工。临时工便宜但不会成长，正式员工越干越强！</div>`;
+    if(!S.staff.length)list=`<div class="desc">◆ 还没有正式员工 · 临时工便宜但不成长，正式员工越干越强</div>`;
     S.staff.forEach(s=>{
       const r=CFG.STAFF_ROLES[s.role];
       const fat=clamp(s.fatigue||0,0,100),resting=!!s.resting;
@@ -2175,8 +2185,10 @@ const UI={
           <button class="pxbtn blue sm" onclick="UI.doRest(${s.id})" ${resting?"disabled":""}>歇一天</button>
           <button class="pxbtn sm" style="background:#9b8f7a" onclick="UI.doFire(${s.id})">解雇</button></div></div>`;});
     this.open(`<h2>👥 员工养成</h2>
-      <div class="desc">在编 ${S.staff.length} 人 ｜ 工资支出 ${fmtY(staffWages())}/天 ｜ 打包产能加成 +${staffPackBonus()} 单/天<br>
-      员工每天积累经验自动升级（Lv5 封顶），也会积累疲劳：≥60 效率 ×0.75、≥85 ×0.4，满 100 强制罢工一天。「歇一天」可大幅恢复，但当天无产出也不涨经验。</div>
+      <div class="desc">◆ 在编 ${S.staff.length} 人 · 工资 ${fmtY(staffWages())}/天 · 打包加成 +${staffPackBonus()} 单/天<br>
+      ◆ 每天自动涨经验（Lv5 封顶），也会累积疲劳<br>
+      ◆ 疲劳 ≥60 效率 ×0.75 · ≥85 ×0.4 · 满 100 强制罢工一天<br>
+      ◆「歇一天」大幅恢复，但当天无产出、也不涨经验</div>
       <h2 style="font-size:14px">🧑‍💼 招聘</h2><div class="cardrow">${hire}</div>
       <h2 style="font-size:14px">📋 在编员工</h2><div class="cardrow">${list}</div>
       <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">关闭</button></div>`);
@@ -2193,12 +2205,12 @@ const UI={
     let obody;
     if(nx){
       const can=S.money>=nx.need;
-      obody=`<div class="desc">当前：<b>${cur.name}</b>（${fx(cur)}）<br>
-        下一级：<b style="color:var(--red)">${nx.name}</b> — ${fx(nx)}<br>
-        升级费 ${fmtY(nx.cost)} ｜ 要求资金储备 ≥ <b>${fmtY(nx.need)}</b>（当前 ${fmtY(Math.floor(S.money))}）</div>
+      obody=`<div class="desc">◆ 当前 <b>${cur.name}</b> · ${fx(cur)}<br>
+        ◆ 下一级 <b style="color:var(--red)">${nx.name}</b> · ${fx(nx)}<br>
+        ◆ 升级费 ${fmtY(nx.cost)} · 需资金储备 ≥ <b>${fmtY(nx.need)}</b>（当前 ${fmtY(Math.floor(S.money))}）</div>
         <div class="panelclose"><button class="pxbtn" onclick="UI.doUpgradeOffice()" ${can?"":"disabled"}>🏠 立即升级（${fmtY(nx.cost)}）</button></div>`;
     }else{
-      obody=`<div class="desc">当前已是最高级：<b>${cur.name}</b>（${fx(cur)}）。小店蒸蒸日上，老板名利双收！</div>`;
+      obody=`<div class="desc">◆ 已达最高级 <b>${cur.name}</b> · ${fx(cur)}<br>◆ 小店蒸蒸日上，老板名利双收</div>`;
     }
     /* 产业投资：大额资金出口，永久加成 + 日维护费 */
     let fbody="";
@@ -2213,7 +2225,7 @@ const UI={
     this.open(`<h2>🏠 升级 · 产业 · 成就</h2>
       ${obody}
       <h2 style="font-size:14px;margin-top:8px">🏭 产业投资（长期资产）</h2>
-      <div class="desc">一次投入终身受益，但每天要付维护费——后期资金的最佳去向。</div>
+      <div class="desc">◆ 一次投入终身受益 · 每天付维护费 · 后期资金的最佳去向</div>
       <div class="cardrow">${fbody}</div>
       <h2 style="font-size:14px;margin-top:8px">🏅 成就墙（${Object.keys(S.achv||{}).length}/${CFG.ACHV.length}）</h2>
       <div class="desc">${tags}</div>
@@ -2233,9 +2245,12 @@ const UI={
         `<button class="pxbtn sm ${S.money>=d.cost?"":"gray"}" onclick="UI.doBuyDecor('${k}')" ${S.money>=d.cost?"":"disabled"}>购买 ${fmtY(d.cost)}</button>`}</div>`};
     let basic="",ads="";
     for(const k in CFG.DECOR){if(CFG.DECOR[k].ad)ads+=card(k);else basic+=card(k)}
-    const busy=S.decor.placed.length?`已放置 ${S.decor.placed.length} 件物件——点场景里的金色框可收回到仓库`:"还没布置任何物件";
-    this.open(`<h2>🎨 场景布置</h2>
-      <div class="desc">选中物件后<b>点击场景地板</b>放置；点击已放置物件（金色框）收回。摆设提供小幅永久加成。</div>
+    const busy=S.decor.placed.length?`◆ 已放置 ${S.decor.placed.length} 件 · 点场景里的金色框可收回仓库`:"◆ 还没布置任何物件";
+    this.open(`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
+        <h2 style="margin-bottom:0">🎨 场景布置</h2>
+        <button class="pxbtn gray sm" onclick="UI.close()">✕ 关闭</button>
+      </div>
+      <div class="desc">◆ 选中物件后<b>点场景地板</b>放置 · 点金色框收回<br>◆ 摆设提供小幅永久加成</div>
       <div style="font-size:12px;font-weight:800;color:#6a5038;margin-bottom:6px">🛒 基础款（金币购买）</div>
       <div class="cardrow">${basic}</div>
       <div style="font-size:12px;font-weight:800;color:var(--blue);margin-bottom:6px">📺 视频专享（看视频免费解锁）</div>
@@ -2251,18 +2266,18 @@ const UI={
     if(this._decSel){   // 进入放置模式：自动关面板，露出完整场景直接点地放置
       $("#panelLayer").classList.remove("on","decor");$("#panel").classList.remove("decor");
       this._decorEdit=true;$("#decorBar").classList.add("on");
-      UI.toast(`已选中「${CFG.DECOR[k].name}」，点击办公室地板放置`,"info");
+      UI.toast(`◆ 已选中「${CFG.DECOR[k].name}」· 点办公室地板放置`,"info");
     }else this.openDecor();
   },
   doBuyDecor(k){const d=CFG.DECOR[k];
     if(!d||S.money<d.cost)return;
     S.money-=d.cost;S.decor.owned[k]=(S.decor.owned[k]||0)+1;
-    UI.toast(`🛒 购入「${d.name}」！去场景里挑个位置放下吧`,"good");AUD.play("coin");
+    UI.toast(`◆ 购入「${d.name}」· 去场景里挑个位置`,"good");AUD.play("coin");
     diary(`购入摆设「${d.name}」`,S.day);this.refresh();this.openDecor()},
   /* ---- 激励视频占位：3 秒模拟广告后执行回调（接真实 SDK 时只改此函数体） ---- */
   _watchAd(label,done){
     this.open(`<h2>📺 激励广告</h2>
-      <div class="desc">广告播放中… <b id="adNum">3</b> 秒后可领取「${label}」</div>
+      <div class="desc">◆ 广告播放中 · <b id="adNum">3</b> 秒后领取「${label}」</div>
       <div style="text-align:center;font-size:34px;padding:16px 0">📺☕️🎬</div>
       <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">跳过（不领奖）</button></div>`);
     let n=3;clearInterval(this._adTimer);
@@ -2273,32 +2288,32 @@ const UI={
   doAdDecor(k){const d=CFG.DECOR[k];if(!d||S.decor.owned[k])return;
     this._watchAd(d.name,()=>{
       S.decor.owned[k]=(S.decor.owned[k]||0)+1;
-      UI.toast(`🎁 广告奖励：「${d.name}」已解锁！`,"good");
+      UI.toast(`★ 广告奖励 ·「${d.name}」已解锁`,"good");
       diary(`观看广告解锁摆设「${d.name}」`,S.day);this.openDecor()})},
   /* ---- 激励视频位 1/2：明日投流曝光 ×2 ／ 明日每单收益 ×1.5 ---- */
   doAdBoost(k){if(!S.adFx||S.adFx[k]>0)return;
     const label=k==="adBoost"?"明日投流曝光 ×2":"明日每单收益 ×1.5";
     this._watchAd(label,()=>{S.adFx[k]=1;AUD.play("coin");
-      UI.toast(`🎁 广告奖励：${label}（明天结算生效）`,"good");
+      UI.toast(`★ 广告奖励 · ${label} · 明日结算生效`,"good");
       diary(`看广告获得增益「${label}」`,S.day);this.save()})},
   /* ---- 激励视频位 3：研发/素材冲刺 -1 天 ---- */
   doAdRush(pid){const p=S.products.find(x=>x.id===pid);
     if(!p||!((p.devLeft>1)||(p.artLeft>1)))return;
     this._watchAd("研发进度 -1 天",()=>{
       if(p.devLeft>1)p.devLeft--;else if(p.artLeft>1)p.artLeft--;
-      UI.toast(`🚀 「${p.name}」冲刺成功，进度 -1 天！`,"good");AUD.play("coin");
+      UI.toast(`◆「${p.name}」冲刺成功 · 进度 -1 天`,"good");AUD.play("coin");
       this.refresh();this.save();this.openShop()})},
   /* ---- 激励视频位 4：破产急救（每天一次） ---- */
   openBailout(){
     const amt=loanLimit();
     this.open(`<h2>🆘 资金链断裂！</h2>
-      <div class="desc">账户已跌破破产线（${fmtY(CFG.BANKRUPT)}）。看一条视频，平台紧急注资 <b style="color:var(--green)">${fmtY(amt)}</b> 帮你续命——<b>每天限一次</b>，错过今天就直接破产清算。</div>
+      <div class="desc">◆ 账户已跌破破产线（${fmtY(CFG.BANKRUPT)}）<br>◆ 看一条视频，平台紧急注资 <b style="color:var(--green)">${fmtY(amt)}</b> 续命 · <b>每天限一次</b><br>◆ 错过今天，直接破产清算</div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <button class="pxbtn blue" onclick="UI.doBailout()">📺 看视频自救</button>
         <button class="pxbtn gray" onclick="UI.openEnd(true)">接受破产结局</button></div>`)},
   doBailout(){this._watchAd("平台应急金",()=>{
     const amt=loanLimit();S.money+=amt;AUD.play("coin");
-    UI.toast(`🆘 平台应急金到账 ${fmtY(amt)}，活下去！`,"good");
+    UI.toast(`★ 平台应急金到账 ${fmtY(amt)} · 撑住`,"good");
     diary("资金链断裂，看广告获得平台应急金续命",S.day);this.refresh();this.save()})},
   decorTap(x,y){
     /* 场景编辑点击：有选中→放置；无选中点到已放置物件→收回 */
@@ -2306,20 +2321,20 @@ const UI={
     if(x<0||x>14||y<4||y>14)return;   // 越界/墙面不可放
     const key=x+","+y;
     if(this._decSel){
-      if((blocked.has(key)))return UI.toast("这里放不了，选块空地板","bad");
-      if(S.decor.placed.some(p=>p.x===x&&p.y===y))return UI.toast("这个位置已经有物件了","bad");
+      if((blocked.has(key)))return UI.toast("✖ 这里放不了 · 换块空地板","bad");
+      if(S.decor.placed.some(p=>p.x===x&&p.y===y))return UI.toast("✖ 该位置已有物件","bad");
       const own=S.decor.owned[this._decSel]||0;
-      if(!own)return UI.toast("还没有这个物件，先在下方购买或看广告解锁","bad");
-      if(S.decor.placed.filter(p=>p.id===this._decSel).length>=own)return UI.toast("拥有数量已全部在场，先收一件或再买一件","bad");
+      if(!own)return UI.toast("✖ 仓库没有该物件 · 先购买或看视频解锁","bad");
+      if(S.decor.placed.filter(p=>p.id===this._decSel).length>=own)return UI.toast("✖ 已全部在场 · 先收回或再买一件","bad");
       S.decor.placed.push({id:this._decSel,x,y});
-      UI.toast(`🪴 「${CFG.DECOR[this._decSel].name}」放置成功！`,"good");AUD.play("coin");
+      UI.toast(`◆「${CFG.DECOR[this._decSel].name}」放置成功`,"good");AUD.play("coin");
       this.refresh();this.save();
       const left=(S.decor.owned[this._decSel]||0)-S.decor.placed.filter(p=>p.id===this._decSel).length;
       if(left<=0)this._decSel=null;   // 仓库没存货了自动取消选中，悬浮条保留可继续收回
     }else{
       const i=S.decor.placed.findIndex(p=>p.x===x&&p.y===y);
       if(i>=0){const rm=S.decor.placed.splice(i,1)[0];
-        UI.toast(`「${CFG.DECOR[rm.id].name}」已收回仓库`,"info");AUD.play("click");this.refresh();this.save()}
+        UI.toast(`◆「${CFG.DECOR[rm.id].name}」已收回仓库`,"info");AUD.play("click");this.refresh();this.save()}
     }
   },
   buyFacil(k){
@@ -2327,7 +2342,7 @@ const UI={
     if(!f||S.fac[k]||S.money<f.cost)return;
     S.money-=f.cost;S.fac[k]=true;
     diary(`投资了产业「${f.name}」，每天付 ${fmtY(f.upkeep)} 维护费`);
-    UI.toast(`🏭 产业落成：「${f.name}」！${f.desc}`,"good");
+    UI.toast(`★ 产业落成 ·「${f.name}」<br>${f.desc}`,"good");
     UI.fx("build");UI.fx("confetti",2);   // 施工烟尘 + 厂房升起 + 小型彩纸
     this.refresh();this.openOffice();
   },
@@ -2336,8 +2351,8 @@ const UI={
     const lim=loanLimit(),debt=S.debt,per=Math.round(debt*CFG.LOAN.RATE),left=Math.max(0,lim-debt);
     const step=CFG.LOAN.STEP;
     this.open(`<h2>🏦 银行贷款</h2>
-      <div class="desc">创业缺钱？银行愿意拉你一把——但利息每天 <b>1.5% 利滚利</b>，救急不救穷。<br>
-        欠款 <b style="color:var(--red)">${fmtY(debt)}</b>（每日利息 ${fmtY(per)}）｜ 总额度 <b>${fmtY(lim)}</b>（随称号提升）｜ 剩余额度 <b>${fmtY(left)}</b></div>
+      <div class="desc">◆ 创业缺钱？银行愿意拉你一把 · 但利息每天 <b>1.5% 利滚利</b>，救急不救穷<br>
+        ◆ 欠款 <b style="color:var(--red)">${fmtY(debt)}</b>（日息 ${fmtY(per)}）· 总额度 <b>${fmtY(lim)}</b>（随称号提升）· 剩余 <b>${fmtY(left)}</b></div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
         <button class="pxbtn sm" onclick="UI.doBorrow(1)" ${left>=step?"":"disabled"}>借入 ${fmtY(step)}${left<step?"（额度不足）":""}</button>
         <button class="pxbtn sm" onclick="UI.doBorrow(2)" ${left>=step*2?"":"disabled"}>借入 ${fmtY(step*2)}${left<step*2?"（额度不足）":""}</button>
@@ -2367,54 +2382,58 @@ const UI={
       opts+=`<button class="pxbtn ${i===0?"":"gray"} sm" onclick="UI.doDeckOpt(${i})" ${ok?"":"disabled"}>${o.l}${ok?"":"（条件不足）"}</button>`});
     /* 对话形象：事件人物像素头像（占位美术） */
     const face=EVENT_FACE[ev.id]||"staff",fc=VISITOR_COLOR[ev.id]||"#8a6a4a";
-    this.open(`<h2>${big?"🏆 公司大事记":"⚡ 突发事件"}</h2>
+    this.open(`<h2>${big?"★ 公司大事记":"◆ 突发事件"}</h2>
       <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:4px">
         <img src="${faceArt(face)}" alt="${face}" style="width:64px;height:64px;image-rendering:pixelated;border:3px solid ${fc};border-radius:10px;background:#fffaf0;flex:0 0 auto;box-shadow:0 3px 0 rgba(0,0,0,.2)">
         <div style="font-size:13px;color:var(--ink);line-height:1.8;flex:1;padding-top:6px"><b>${ev.t}</b><br>${ev.d}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">${opts}</div>
-      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">先不管</button></div>`);
+      <div class="panelclose"><button class="pxbtn gray sm" onclick="UI.close()">暂不处理</button></div>`);
   },
   doDeckOpt(i){
     const ev=this._ev;if(!ev||!ev.opts[i])return;
     const msg=ev.opts[i].f();
+    /* 大事记一次性处理：标记已解决，避免同一事件每天反复上门（如税务稽查） */
+    if(BIG_EVENTS.includes(ev)){
+      if(ev.id==="vc"){if(!S.flags.be.vc)S.flags.be.vc=true}
+      else S.flags.be[ev.id]=true}
     if(msg)UI.toast(msg,"info");
     this._ev=null;this.refresh();this.close();
   },
 
   /* ---- 月报 / 结算 ---- */
   openMonth(m){
-    this.open(`<h2>📊 第 ${m} 个月结算</h2>
+    this.open(`<h2>◆ 第 ${m} 月 · 经营结算</h2>
       <div class="cardrow">
-        <div class="card"><h3>本月营业额</h3><div class="num" style="font-size:20px;font-weight:900;color:#b23a32">${fmtY(S.monthRevenue)}</div></div>
-        <div class="card"><h3>本月订单</h3><div class="num" style="font-size:20px;font-weight:900;color:#3f7fc1">${S.monthOrders} 单</div></div>
+        <div class="card"><h3>◇ 本月营业额</h3><div class="num" style="font-size:20px;font-weight:900;color:#b23a32">${fmtY(S.monthRevenue)}</div></div>
+        <div class="card"><h3>◇ 本月订单</h3><div class="num" style="font-size:20px;font-weight:900;color:#3f7fc1">${S.monthOrders} 单</div></div>
       </div>
-      <div class="desc">资金 ${fmtY(S.money)} ｜ 口碑 ${S.rep.toFixed(1)}★ ｜ 粉丝 ${Math.floor(S.fans)} ｜ 称号「${CFG.LEVELS[S.level][1]}」</div>
+      <div class="desc">◆ 资金 ${fmtY(S.money)} · 口碑 ${S.rep.toFixed(1)}★ · 粉丝 ${Math.floor(S.fans)} · 称号「${CFG.LEVELS[S.level][1]}」</div>
       <div class="panelclose"><button class="pxbtn sm" onclick="UI.close()">继续经营</button></div>`);
     S.monthRevenue=0;S.monthOrders=0;
   },
   openEnd(mode){
     const broke=mode===true, acquired=mode==="acquired";
     const r=S.totalRevenue;
-    let rank="C",title="佛系店主",cmt="生意冷清，再接再厉…";
-    if(r>=1000000){rank="SS";title="百万传奇！！";cmt="从车库小店到百万帝国——你写进了行业史册！"}
-    else if(r>=200000){rank="S";title="电商巨头";cmt="你的小店上了热搜，同行都在研究你！"}
-    else if(r>=80000){rank="A";title="爆款工厂";cmt="远超首期目标，口碑与销量双丰收！"}
-    else if(r>=40000){rank="B";title="销冠小铺";cmt="首期目标达成，继续冲！"}
-    else if(r>=16000){rank="C";title="佛系店主";cmt="小有名气，再来一局冲更高！"}
-    if(acquired){title="功成身退";cmt=`巨头以 ${fmtY(Math.round(r*0.5+20000))} 收购了店铺——创业故事完美收官！`}
-    else if(broke){rank="F";title="资金链断裂…";cmt="店铺破产了，总结经验再来！"}
+    let rank="C",title="佛系店主",cmt="生意冷清 · 再来一局翻盘";
+    if(r>=1000000){rank="SS";title="百万传奇";cmt="从车库小店到百万帝国 · 你写进了行业史册"}
+    else if(r>=200000){rank="S";title="电商巨头";cmt="小店上了热搜 · 同行都在研究你"}
+    else if(r>=80000){rank="A";title="爆款工厂";cmt="远超首期目标 · 口碑销量双丰收"}
+    else if(r>=40000){rank="B";title="销冠小铺";cmt="首期目标达成 · 继续往上冲"}
+    else if(r>=16000){rank="C";title="佛系店主";cmt="小有名气 · 再来一局冲更高"}
+    if(acquired){title="功成身退";cmt=`巨头以 ${fmtY(Math.round(r*0.5+20000))} 收购店铺 · 创业故事完美收官`}
+    else if(broke){rank="F";title="资金链断裂";cmt="店铺破产 · 总结经验再来一局"}
     $("#endRank").textContent=rank;
-    $("#endTitle").textContent=(acquired?"收购结算：":broke?"破产结算：":"经营收官：")+title;
+    $("#endTitle").textContent="◆ "+(acquired?"收购结算":broke?"破产结算":"经营收官")+" · "+title;
     const nAchv=Object.keys(S.achv||{}).length,nFac=Object.keys(S.fac||{}).length;
     $("#endStats").innerHTML=
       `<div>累计营业额 <span>${fmtY(S.totalRevenue)}</span></div><div>累计订单 <span>${S.totalOrders} 单</span></div>
        <div>最终粉丝 <span>${Math.floor(S.fans)}</span></div><div>最终口碑 <span>${S.rep.toFixed(1)} ★</span></div>
        <div>获得称号 <span>${CFG.LEVELS[S.level][1]}</span></div><div>经营天数 <span>${S.day} 天</span></div>
        <div>成就解锁 <span>${nAchv}/${CFG.ACHV.length}</span></div><div>投资产业 <span>${nFac} 处</span></div>
-       ${S.debt>0?`<div style="grid-column:1/3;text-align:center;color:#ff9a8a;font-size:13px">⚠ 仍欠银行 ${fmtY(S.debt)}（每日利滚利）</div>`:""}
+       ${S.debt>0?`<div style="grid-column:1/3;text-align:center;color:#ff9a8a;font-size:13px">◆ 仍欠银行 ${fmtY(S.debt)}（每日利滚利）</div>`:""}
        <div style="grid-column:1/3;text-align:center;color:#cdbfa0;font-size:12px">${cmt}</div>`;
-    $("#endDiary").innerHTML=`<div class="dt">📖 经营日记</div>`+
+    $("#endDiary").innerHTML=`<div class="dt">◆ 经营日记</div>`+
       S.diary.map(e=>`<div><b>D${e.d}</b>${e.t}</div>`).join("");
     localStorage.removeItem("boomStory.save");
     this.close();
