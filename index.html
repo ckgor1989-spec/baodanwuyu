@@ -164,9 +164,13 @@ canvas#scene{width:100%;height:100%;object-fit:contain;display:block;image-rende
 #panelLayer.on{display:flex}
 #panelLayer.decor{background:rgba(20,14,24,.55)}   /* 场景编辑：全屏面板 */
 #panel{width:min(94%,420px);max-height:86%;overflow:auto;padding:14px}
-#panel.decor{position:fixed;inset:0;width:100%;max-width:none;max-height:100%;height:100%;
-  padding:16px 14px calc(20px + env(safe-area-inset-bottom));border-width:0;border-radius:0;
+#panel.decor{position:fixed;inset:0;width:100%;max-width:none;max-height:100%;height:100%;height:100dvh;
+  padding:16px 14px 0;border-width:0;border-radius:0;
   box-shadow:none;z-index:70}
+/* 布置面板底部操作条：吸底常驻，避免被系统导航栏/安全区遮挡 */
+#panel.decor .decorfoot{position:sticky;bottom:0;z-index:2;margin:10px -14px 0;padding:10px 14px calc(16px + env(safe-area-inset-bottom));
+  text-align:center;background:linear-gradient(rgba(247,233,198,0),var(--cream) 28%);
+  border-top:2px solid rgba(122,82,48,.18)}
 /* 放置模式悬浮条：面板关闭后仍可完成/返回布置面板 */
 #decorBar{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:45;display:none;gap:8px}
 #decorBar.on{display:flex}
@@ -425,6 +429,63 @@ const CFG = {
     aquarium:{name:"🐠 鱼缸",    cost:0, ad:true, rest:2,           desc:"全员每天疲劳额外恢复 +2"},
     catbed:{name:"🐱 猫窝",      cost:0, ad:true, rest:3,           desc:"全员疲劳恢复 +3，摸鱼神器"},
     crane: {name:"🕹 娃娃机",     cost:0, ad:true, buff:{fan:.03},   desc:"涨粉速度 +3%"},
+    /* —— 扩展摆设 50 种（v7）—— */
+    /* 休息/舒适类 */
+    relaxsofa:{name:"🛋 懒人沙发",cost:1200,rest:2,desc:"午休躺一会儿，全员疲劳恢复 +2"},
+    airpur:  {name:"🌬 空气净化器",cost:1600,rest:1,buff:{cost:.01},desc:"呼吸顺畅，疲劳恢复 +1 · 每日成本 -1%"},
+    micro:   {name:"🍱 微波炉",   cost:900, rest:1,desc:"热饭不用排队，疲劳恢复 +1"},
+    cooler:  {name:"🚰 饮水机",   cost:700, rest:1,desc:"随时补水，疲劳恢复 +1"},
+    snackcart:{name:"🍪 零食推车",cost:1500,rest:2,desc:"随手加餐，疲劳恢复 +2"},
+    gamechair:{name:"🪑 电竞椅",  cost:2200,rest:2,desc:"坐得舒服，疲劳恢复 +2"},
+    massage: {name:"💆 按摩椅",   cost:4800,rest:3,desc:"十分钟回血，疲劳恢复 +3"},
+    aroma:   {name:"🌸 香薰机",   cost:2000,rest:1,buff:{fan:.01},desc:"氛围舒适，疲劳恢复 +1 · 涨粉 +1%"},
+    humid:   {name:"💧 加湿器",   cost:1800,rest:1,buff:{cost:.01},desc:"空气湿润，疲劳恢复 +1 · 每日成本 -1%"},
+    /* 曝光/直播类 */
+    whitebd: {name:"📋 白板",     cost:1100,buff:{expo:1},desc:"把卖点写清楚，曝光 +1/天"},
+    projector:{name:"📽 投影仪",  cost:3200,buff:{expo:3},desc:"投屏演示，曝光 +3/天"},
+    tvwall:  {name:"📺 电视墙",   cost:5200,buff:{expo:5},desc:"循环播放爆款视频，曝光 +5/天"},
+    speaker: {name:"🔊 音响",     cost:2600,buff:{expo:2},desc:"bgm 一响，客流就来 · 曝光 +2/天"},
+    floorlamp:{name:"🪔 落地灯",  cost:1500,buff:{expo:2},desc:"暖光打亮门面，曝光 +2/天"},
+    neon:    {name:"💈 霓虹灯牌", cost:4200,buff:{expo:4,fan:.01},desc:"夜里最亮的店，曝光 +4/天 · 涨粉 +1%"},
+    lightbox:{name:"🔆 灯箱",     cost:3600,buff:{expo:3},desc:"街边一眼看见，曝光 +3/天"},
+    backdrop:{name:"🎬 直播背景布",cost:0,ad:true,buff:{expo:4},desc:"直播间更有质感，曝光 +4/天"},
+    ringlight:{name:"💡 环形补光灯",cost:0,ad:true,buff:{expo:4},desc:"人脸透亮，曝光 +4/天"},
+    phonestand:{name:"📱 手机支架",cost:0,ad:true,buff:{expo:2},desc:"随手开播，曝光 +2/天"},
+    mixer:   {name:"🎚 声卡调音台",cost:0,ad:true,buff:{expo:3},desc:"声音干净，曝光 +3/天"},
+    prompter:{name:"🗒 提词器",   cost:0,ad:true,buff:{expo:2},desc:"直播不卡壳，曝光 +2/天"},
+    /* 涨粉/展示类 */
+    mannequin:{name:"🧍 展示模特",cost:3800,buff:{fan:.02},desc:"穿搭上身效果，涨粉 +2%"},
+    mirror2: {name:"🪞 试衣镜",   cost:2600,buff:{fan:.02},desc:"顾客爱拍照打卡，涨粉 +2%"},
+    samplecab:{name:"🗄 样品陈列柜",cost:0,ad:true,buff:{fan:.02},desc:"样品一目了然，涨粉 +2%"},
+    newtable:{name:"🆕 新品展示台",cost:0,ad:true,buff:{fan:.02},desc:"新品永远 C 位，涨粉 +2%"},
+    luckybag:{name:"🧧 福袋堆头", cost:0,ad:true,buff:{fan:.03},desc:"路过都想抽一发，涨粉 +3%"},
+    motto:   {name:"🪧 励志标语墙",cost:0,ad:true,buff:{fan:.02},desc:"氛围拉满，涨粉 +2%"},
+    honorwall:{name:"🏅 荣誉墙",  cost:4000,buff:{fan:.03},desc:"实力看得见，涨粉 +3%"},
+    trophycab:{name:"🏆 奖杯陈列柜",cost:0,ad:true,buff:{expo:2,fan:.02},desc:"奖杯一摆，曝光 +2/天 · 涨粉 +2%"},
+    /* 打包/仓储类 */
+    printer: {name:"🖨 打印机",   cost:2400,buff:{pack:1},desc:"面单随手打，产能 +1 单/天"},
+    trolley: {name:"🛒 快递手推车",cost:2000,buff:{pack:1},desc:"少跑两趟，产能 +1 单/天"},
+    packtb:  {name:"🧰 打包台",   cost:2800,buff:{pack:1},desc:"工位更顺手，产能 +1 单/天"},
+    parcelcab:{name:"📦 快递柜",  cost:6000,buff:{pack:2},desc:"集中存取，产能 +2 单/天"},
+    rack:    {name:"🗂 货架组",   cost:4500,buff:{pack:2},desc:"货物好找，产能 +2 单/天"},
+    scale2:  {name:"⚖️ 电子秤",   cost:1200,buff:{pack:1},desc:"称重不卡流程，产能 +1 单/天"},
+    labeler: {name:"🏷 贴单机",   cost:2200,buff:{pack:1},desc:"面单自动贴，产能 +1 单/天"},
+    sealer:  {name:"📎 封箱器",   cost:1400,buff:{pack:1},desc:"封箱快一倍，产能 +1 单/天"},
+    scanner: {name:"🔫 扫码枪",   cost:1800,buff:{pack:1},desc:"扫码即出库，产能 +1 单/天"},
+    /* 成本/管理类 */
+    cashier: {name:"💳 收银台",   cost:3400,buff:{cost:.02},desc:"结账更规范，每日成本 -2%"},
+    safe:    {name:"🔐 保险柜",   cost:4000,buff:{cost:.02},desc:"现金管理到位，每日成本 -2%"},
+    calc:    {name:"🧮 计算器",   cost:1000,buff:{cost:.01},desc:"账算得清，每日成本 -1%"},
+    filecab: {name:"🗃 文件柜",   cost:1600,buff:{cost:.01},desc:"资料不乱，每日成本 -1%"},
+    bosstable:{name:"🪵 老板桌",  cost:5600,buff:{cost:.02,fan:.01},desc:"镇得住场子，成本 -2% · 涨粉 +1%"},
+    meettable:{name:"🪑 会议长桌", cost:3600,buff:{expo:1,cost:.01},desc:"开会更高效，曝光 +1/天 · 成本 -1%"},
+    puncher: {name:"🕘 打卡机",    cost:3200,buff:{cost:.02},desc:"考勤规范，每日成本 -2%"},
+    /* 绿植/氛围类 */
+    hangplant:{name:"🪴 绿萝吊篮",cost:0,ad:true,rest:2,desc:"垂下来一片绿，疲劳恢复 +2"},
+    succulent:{name:"🌵 多肉盆栽",cost:0,ad:true,rest:1,buff:{fan:.01},desc:"好养又好看，疲劳恢复 +1 · 涨粉 +1%"},
+    tallplant:{name:"🌴 落地绿植",cost:0,ad:true,rest:1,buff:{expo:1},desc:"一进门就清爽，疲劳恢复 +1 · 曝光 +1/天"},
+    zengarden:{name:"🪨 禅意小景",cost:0,ad:true,rest:2,desc:"看着就静心，疲劳恢复 +2"},
+    maneki:  {name:"🐈 招财猫",   cost:0,ad:true,buff:{cost:.02},desc:"招财进宝，每日成本 -2%"},
   },
   LEVELS: [[0,"新手店主"],[400,"铜牌小店",{expo:.05}],[750,"银牌商家",{expo:.06,pack:2}],
     [1450,"金牌卖家",{expo:.06,pack:2,cost:.03}],[2750,"品牌旗舰",{expo:.06,pack:2,cost:.03}],
@@ -1025,7 +1086,8 @@ function tickDay(){
     + (S.products.length?(S.products.reduce((a,p)=>a+(p.q||1),0)/S.products.length-1)*0.005:0)   // 商品品质：平均星级提升进店转化
     + (S.flags.giftLive&&S.day<=S.flags.giftLive?0.06:0), 0.02, 0.6);  // 头部达人直播带货：2 天转化加成
   let orders=Math.round(expo*conv*rng(0.85,1.15));
-  orders=clamp(Math.round(clamp(orders,0,150)*liveMult),0,150);
+  orders*=liveMult;
+  orders=Math.min(Math.max(0,Math.round(orders)),3000);   // 取消 150 单硬上限，仅留极端值保护
   orders=Math.max(orders,2);          // 自然客流兜底，防冷启动/口碑低谷零收入死锁
   /* 2) 分单：按热度加权，高价品需求弹性差（贵的东西天然卖得慢）；缺货则丢单扣口碑 */
   let lost=0;
@@ -1434,6 +1496,102 @@ const DECK=[
       S.promoDays=Math.max(S.promoDays,n);S.fans+=80;
       return`★ 抢下坑位 ·「${p.name}」提前上架 · ${n} 天曝光 ×2 · 粉丝 +80`}},
     {l:"没新品，放弃这次坑位",f:()=>{S.fans=Math.max(0,S.fans-20);return"✖ 小二觉得你不给面子 · 掉粉 20"}}]},
+  /* ---- 无提示决策事件：选项只给剧情，结果由玩家自己领悟 ---- */
+  {id:"gear",w:2,t:"🛠 老周要换设备",
+   d:"打包组长老周把新设备报价单拍在你桌上，说换完效率翻倍；账上这笔钱花出去，可就回不来了。",
+   opts:[
+    {l:"拍板：换！",ok:s=>s.money>=decCost(800),f:()=>{S.money-=decCost(800);
+      S.staff.forEach(s=>s.fatigue=clamp(s.fatigue-8,0,100));return"◆ 新设备落地 · 全员疲劳 -8（钱花得值）"}},
+    {l:"先用旧的顶着",f:()=>{S.staff.filter(s=>s.role==="packer"||s.role==="warehouse").forEach(s=>s.fatigue=clamp(s.fatigue+12,0,100));
+      return"✖ 打包组没说什么，干活却开始摔箱子 · 疲劳 +12"}}]},
+  {id:"refund2",w:2,t:"😠 顾客要求退款",
+   d:"一位顾客收到货后坚持要退，还在评论区写了长文。客服把工单转给你，等你一句话。",
+   opts:[
+    {l:"全额退款，再送一张券",ok:s=>s.money>=decCost(300),f:()=>{S.money-=decCost(300);S.rep=clamp(S.rep+0.3,1,5);S.fans+=30;
+      return"◆ 顾客删了差评还晒了券 · 口碑 +0.3 · 粉丝 +30"}},
+    {l:"按规则拒绝，已经写清楚了",f:()=>{S.rep=clamp(S.rep-0.35,1,5);S.fans=Math.max(0,S.fans-50);
+      return"✖ 评论被截图转发 · 口碑 -0.35 · 掉粉 50"}}]},
+  {id:"invoice",w:2,t:"🧾 顾客要开发票",
+   d:"一个企业采购说要报销，财务问你这单要不要按规范走——走流程麻烦，不走又怕留把柄。",
+   opts:[
+    {l:"照章开票，麻烦就麻烦",ok:s=>s.money>=decCost(150),f:()=>{S.money-=decCost(150);S.rep=clamp(S.rep+0.2,1,5);
+      return"◆ 对方成了长期客户 · 口碑 +0.2"}},
+    {l:"让他下个月再来开",f:()=>{S.rep=clamp(S.rep-0.2,1,5);return"✖ 对方转头去了别家 · 口碑 -0.2"}}]},
+  {id:"overtime",w:2,t:"🌙 今晚冲一冲？",
+   d:"离大促还有两天，组长提议今晚全员加班把积压的活儿清掉；大家看着你，等你表态。",
+   opts:[
+    {l:"准了，加班费照发",ok:s=>s.money>=decCost(300),f:()=>{S.money-=decCost(300);S.promoDays=Math.max(S.promoDays,2);
+      S.staff.forEach(s=>s.fatigue=clamp(s.fatigue+12,0,100));return"◆ 积压清空 · 2 天曝光 ×2 · 全员疲劳 +12"}},
+    {l:"都回家，明天再说",f:()=>{S.staff.forEach(s=>s.fatigue=clamp(s.fatigue-6,0,100));
+      return"◆ 大家松了口气 · 全员疲劳 -6 · 活儿明天还得干"}}]},
+  {id:"visit",w:2,t:"📸 网红突然探店",
+   d:"一个本地小网红没打招呼就进了店，举着手机到处拍。店员问你要不要出面接待。",
+   opts:[
+    {l:"亲自接待，安排试吃",ok:s=>s.money>=decCost(400),f:()=>{S.money-=decCost(400);S.fans+=250;S.rep=clamp(S.rep+0.2,1,5);
+      return"★ 视频爆了 · 粉丝 +250 · 口碑 +0.2"}},
+    {l:"让店员正常接待就行",f:()=>{S.rep=clamp(S.rep-0.15,1,5);
+      return"✖ 视频里一句“没人管我” · 口碑 -0.15"}}]},
+  {id:"course",w:2,t:"🎓 平台推来一门课",
+   d:"平台运营发来一门“爆单方法论”课程，说团队集体报名有折扣；不报，好像也没什么损失。",
+   opts:[
+    {l:"给团队报名",ok:s=>s.money>=decCost(350),f:()=>{S.money-=decCost(350);
+      S.staff.forEach(s=>{s.exp+=60;checkLevel(s)});return"◆ 全员听完课 · 员工经验 +60"}},
+    {l:"让他们自己找资料学",f:()=>{S.staff.forEach(s=>s.fatigue=clamp(s.fatigue+8,0,100));
+      return"✖ 各自瞎摸索 · 全员疲劳 +8"}}]},
+  {id:"basket",w:2,t:"🌺 隔壁新店开业",
+   d:"隔壁新开的店敲锣打鼓，老板托人带话，问你要不要送个花篮捧捧场。",
+   opts:[
+    {l:"送个花篮，写句吉利话",ok:s=>s.money>=decCost(180),f:()=>{S.money-=decCost(180);S.rep=clamp(S.rep+0.2,1,5);S.fans+=20;
+      return"◆ 街坊都说你会做人 · 口碑 +0.2 · 粉丝 +20"}},
+    {l:"装作没看见",f:()=>{S.rep=clamp(S.rep-0.15,1,5);return"✖ 整条街都知道你没去 · 口碑 -0.15"}}]},
+  {id:"rush",w:2,t:"⚡ 大客户要加急",
+   d:"一个大客户下了单，要求明天必须发货，说愿意加钱。仓库这周本来就满负荷。",
+   opts:[
+    {l:"接单，加钱赶工",f:()=>{S.money+=decCost(600);S.staff.forEach(s=>s.fatigue=clamp(s.fatigue+15,0,100));
+      return`★ 加急款到账 ${fmtY(decCost(600))} · 全员疲劳 +15`}},
+    {l:"按正常排期走",f:()=>{S.rep=clamp(S.rep-0.15,1,5);return"✖ 客户觉得你不灵活 · 口碑 -0.15"}}]},
+  {id:"leave",w:2,t:"🏖 员工想请长假",
+   d:"一名老员工说家里有事，想请一周假。现在正是旺季，人手一个都紧。",
+   opts:[
+    {l:"批假，另外找人顶班",ok:s=>s.money>=decCost(250),f:()=>{S.money-=decCost(250);S.staff.forEach(s=>s.fatigue=clamp(s.fatigue-20,0,100));
+      return"◆ 顶班安排妥当 · 全员疲劳 -20"}},
+    {l:"劝他再撑过这阵",f:()=>{S.staff.forEach(s=>s.fatigue=clamp(s.fatigue+10,0,100));S.rep=clamp(S.rep-0.1,1,5);
+      return"✖ 人心散了 · 全员疲劳 +10 · 口碑 -0.1"}}]},
+  {id:"expire",w:2,t:"📦 仓库翻出临期货",
+   d:"盘点时发现一批货快到保质期，量不大，但处理方式得你定。",
+   opts:[
+    {l:"降价清仓，能回一点是一点",f:()=>{let n=0;S.products.forEach(p=>{const q=Math.min(p.stock,20);p.stock-=q;n+=q*8});
+      S.money+=n;S.rep=clamp(S.rep-0.2,1,5);return`◆ 清仓回款 ${fmtY(n)} · 口碑 -0.2`}},
+    {l:"全部销毁，别流到顾客手里",f:()=>{S.products.forEach(p=>p.stock=Math.floor(p.stock*0.85));S.rep=clamp(S.rep+0.2,1,5);
+      return"◆ 损失一点库存 · 口碑 +0.2"}}]},
+  {id:"collab",w:2,t:"🤝 同行邀你联合直播",
+   d:"隔壁类目的头部商家想跟你连麦做一场联合直播，说流量可以互导；但要分走一部分曝光。",
+   opts:[
+    {l:"答应连麦，一起播",ok:s=>s.money>=decCost(120),f:()=>{S.money-=decCost(120);S.fans+=180;
+      return"★ 对方粉丝涌进来 · 粉丝 +180"}},
+    {l:"单干，不想被人蹭流量",f:()=>{S.fans=Math.max(0,S.fans-30);S.rep=clamp(S.rep-0.1,1,5);
+      return"✖ 对方粉丝在评论区阴阳你 · 掉粉 30 · 口碑 -0.1"}}]},
+  {id:"fire",w:2,t:"🚒 物业通知消防检查",
+   d:"物业发来通知，下周消防检查；店里有几处线路老化，整改要停业半天。",
+   opts:[
+    {l:"停工整改，按规矩来",ok:s=>s.money>=decCost(400),f:()=>{S.money-=decCost(400);S.rep=clamp(S.rep+0.15,1,5);
+      return"◆ 检查顺利通过 · 口碑 +0.15"}},
+    {l:"先拖一拖，等检查前再说",f:()=>{S.money-=decCost(900);S.rep=clamp(S.rep-0.3,1,5);
+      return"✖ 被开了整改单 · 罚款 + 口碑 -0.3"}}]},
+  {id:"ideap",w:2,t:"💡 员工提了个新点子",
+   d:"一个年轻员工说想到个新品方向，想申请一点预算打样；做不作数，全看你。",
+   opts:[
+    {l:"给预算，让他试试",ok:s=>s.money>=decCost(500),f:()=>{S.money-=decCost(500);
+      S.products.forEach(p=>{if(p.listed)p.heat=(p.heat||0)+10});S.fans+=40;
+      return"★ 样品反响不错 · 在售商品热度 +10 · 粉丝 +40"}},
+    {l:"先把手头的活干好",f:()=>{S.staff.forEach(s=>s.fatigue=clamp(s.fatigue+10,0,100));
+      return"✖ 他嘴上答应，心里憋着 · 全员疲劳 +10"}}]},
+  {id:"refer",w:2,t:"📞 老客户转介绍",
+   d:"一位老客户说有个朋友想做企业采购，问你能不能亲自对接；让客服跟，也说得过去。",
+   opts:[
+    {l:"亲自接待，把单拿下",f:()=>{S.money+=decCost(600);S.rep=clamp(S.rep+0.25,1,5);S.fans+=100;
+      return`★ 企业单成交 ${fmtY(decCost(600))} · 口碑 +0.25 · 粉丝 +100`}},
+    {l:"让客服按流程跟进",f:()=>{S.rep=clamp(S.rep-0.1,1,5);return"✖ 对方觉得不受重视 · 口碑 -0.1"}}]},
 ];
 function triggerDeck(forceId){
   const wOf=e=>Math.max(0,e.wfn?e.wfn():e.w);   // 动态权重：人脉解锁 / 未解锁控制事件是否进池
@@ -1597,6 +1755,132 @@ function bakeDecor(){
   SPR.dec_blindbox=mkTile(g=>{g.fillStyle="#6a4426";g.fillRect(1,2,14,13);g.fillStyle="#8a5a34";g.fillRect(1,2,14,2);
     g.fillStyle="#d94f45";g.fillRect(3,5,4,8);g.fillStyle="#3f7fc1";g.fillRect(8,5,4,8);g.fillStyle="#f2a24b";g.fillRect(3,5,1,8);
     g.fillStyle="#fff6d8";g.fillRect(9,7,2,2);g.fillStyle="#f2d24b";g.fillRect(4,7,2,2);});
+  /* ---- v7 新增的 50 种摆设：程序化 16×16 像素素材 ---- */
+  const fr=(g,c,x,y,w,h)=>{g.fillStyle=c;g.fillRect(x,y,w,h)};
+  const dPlant=(id,pot,leaf,leaf2,style)=>{SPR["dec_"+id]=mkTile(g=>{
+    if(style===0){fr(g,"#8a6a4a",7,0,2,5);fr(g,pot,5,4,6,4);fr(g,leaf,3,8,10,6);fr(g,leaf2,1,10,14,3);fr(g,leaf2,5,7,6,2)}
+    else if(style===1){fr(g,pot,4,10,8,5);fr(g,"#b57e3a",3,14,10,1);fr(g,leaf,6,7,4,3);fr(g,leaf2,7,5,2,3);fr(g,leaf2,4,8,2,3);fr(g,leaf2,10,8,2,3)}
+    else if(style===2){fr(g,pot,5,11,6,4);fr(g,"#6a4426",7,6,2,5);fr(g,leaf,4,2,8,5);fr(g,leaf2,2,4,2,5);fr(g,leaf2,12,4,2,5);fr(g,leaf2,6,0,4,3)}
+    else{fr(g,"#4a4642",1,13,14,2);fr(g,"#8a8a82",5,8,6,5);fr(g,"#b8b8ae",7,10,3,3);fr(g,leaf,11,3,3,7);fr(g,leaf2,12,1,2,3);fr(g,"#f2d24b",3,3,2,2)}
+  });};
+  const dSeat=(id,c1,c2,c3,style)=>{SPR["dec_"+id]=mkTile(g=>{
+    if(style===0){fr(g,c2,1,6,14,7);fr(g,c1,1,3,14,4);fr(g,c1,2,9,12,4);fr(g,c3,3,11,4,2);fr(g,c3,9,11,4,2);fr(g,c3,3,4,4,2);fr(g,c3,9,4,4,2)}
+    else if(style===1){fr(g,c1,4,0,8,9);fr(g,c2,5,1,6,7);fr(g,c3,6,3,4,2);fr(g,c1,3,9,10,3);fr(g,c2,7,13,2,2);fr(g,c1,4,15,8,1)}
+    else{fr(g,c1,3,2,10,10);fr(g,c2,4,4,8,7);fr(g,c3,7,6,2,3);fr(g,c1,1,12,14,3);fr(g,c2,1,2,2,9);fr(g,c3,12,4,2,2)}
+  });};
+  const dScreen=(id,frame,glass,glow,style)=>{SPR["dec_"+id]=mkTile(g=>{
+    if(style===0){fr(g,frame,1,1,14,10);fr(g,glass,2,2,12,8);fr(g,glow,3,3,3,1);fr(g,glow,3,5,5,1);fr(g,glow,3,7,4,1);fr(g,frame,3,11,2,4);fr(g,frame,11,11,2,4);fr(g,frame,4,14,8,1)}
+    else if(style===1){fr(g,frame,0,2,16,11);fr(g,glass,1,3,14,9);fr(g,glow,2,4,6,3);fr(g,glow,9,7,5,3);fr(g,frame,2,13,3,2);fr(g,frame,11,13,3,2)}
+    else if(style===2){fr(g,frame,1,1,14,6);fr(g,glass,2,2,12,4);fr(g,glow,3,3,3,2);fr(g,glow,7,3,2,2);fr(g,glow,10,3,3,2);fr(g,frame,6,7,4,7);fr(g,frame,3,14,10,1)}
+    else{fr(g,frame,1,1,14,9);fr(g,glass,2,2,12,7);fr(g,glow,3,3,2,5);fr(g,glow,6,3,2,5);fr(g,glow,9,3,2,5);fr(g,glow,12,3,1,5);fr(g,frame,3,10,2,5);fr(g,frame,11,10,2,5)}
+  });};
+  const dWall=(id,c1,c2,c3,style)=>{SPR["dec_"+id]=mkTile(g=>{
+    if(style===0){fr(g,c1,1,1,14,12);fr(g,c2,2,2,12,10);fr(g,c3,4,4,3,5);fr(g,c3,9,4,3,5);fr(g,"#f2d24b",5,5,1,3);fr(g,"#f2d24b",10,5,1,3);fr(g,c3,4,10,8,1)}
+    else if(style===1){fr(g,c1,1,1,14,10);fr(g,c2,2,2,12,8);fr(g,c3,3,4,10,1);fr(g,c3,3,6,7,1);fr(g,c3,3,8,9,1);fr(g,c1,3,11,2,4);fr(g,c1,11,11,2,4)}
+    else{fr(g,c1,1,1,14,14);fr(g,c2,2,2,12,12);fr(g,c3,3,3,4,10);fr(g,"#f4eee0",4,4,1,8);fr(g,c3,10,3,2,6);fr(g,c3,12,3,1,8)}
+  });};
+  const dBox=(id,c1,c2,c3,style)=>{SPR["dec_"+id]=mkTile(g=>{
+    if(style===0){fr(g,"#55555c",7,5,1,10);fr(g,"#8a8a92",5,2,5,2);fr(g,c2,2,10,12,5);fr(g,c1,3,8,10,3);fr(g,c3,7,9,2,2);fr(g,"#333c48",3,14,2,2);fr(g,"#333c48",11,14,2,2)}
+    else if(style===1){fr(g,c1,1,1,14,14);fr(g,c2,1,1,14,1);fr(g,c2,1,5,14,1);fr(g,c2,1,9,14,1);fr(g,c2,4,1,1,14);fr(g,c2,8,1,1,14);fr(g,c2,12,1,1,14);fr(g,c3,5,2,2,1);fr(g,c3,9,6,2,1);fr(g,c3,2,10,2,1)}
+    else if(style===2){fr(g,c1,1,2,14,13);fr(g,c2,2,5,12,1);fr(g,c2,2,10,12,1);fr(g,c3,2,2,4,3);fr(g,c3,7,2,4,3);fr(g,c3,3,6,3,4);fr(g,c3,8,6,3,4);fr(g,c3,2,11,3,3);fr(g,c3,9,11,4,3)}
+    else if(style===3){fr(g,c2,1,8,14,3);fr(g,"#5a3a28",2,11,2,4);fr(g,"#5a3a28",12,11,2,4);fr(g,c1,3,4,9,4);fr(g,c3,7,4,2,4);fr(g,c1,12,2,2,3)}
+    else if(style===4){fr(g,c1,4,5,9,8);fr(g,c2,5,6,7,3);fr(g,"#fff6d8",10,9,4,2);fr(g,c3,6,9,2,2)}
+    else if(style===5){fr(g,c1,3,6,10,6);fr(g,c2,3,6,10,2);fr(g,c3,10,8,3,2);fr(g,c1,5,12,2,3);fr(g,c1,9,12,2,3)}
+    else if(style===6){fr(g,c1,4,2,7,5);fr(g,c2,5,3,5,2);fr(g,c1,3,6,5,7);fr(g,c3,5,7,2,1);fr(g,c3,9,4,5,1)}
+    else if(style===7){fr(g,c1,2,9,12,4);fr(g,c2,3,10,10,2);fr(g,c1,5,3,6,6);fr(g,"#fff6d8",6,4,4,3);fr(g,c3,6,5,2,1)}
+    else{fr(g,c1,1,4,14,10);fr(g,c2,2,3,12,2);fr(g,"#fff6d8",3,8,8,1);fr(g,c3,3,10,3,1);fr(g,"#2b2330",10,9,3,3)}
+  });};
+  const dApp=(id,c1,c2,c3,style)=>{SPR["dec_"+id]=mkTile(g=>{
+    if(style===0){fr(g,c1,2,4,12,10);fr(g,c2,3,5,7,6);fr(g,"#fff6d8",4,6,5,4);fr(g,c3,11,6,2,1);fr(g,c3,11,8,2,1);fr(g,c2,4,9,6,1)}
+    else if(style===1){fr(g,c1,4,5,8,10);fr(g,c2,5,6,6,3);fr(g,"#8ec7e0",5,1,6,4);fr(g,c3,6,7,1,3);fr(g,c2,4,14,8,1)}
+    else if(style===2){fr(g,c1,3,3,10,12);fr(g,c2,4,4,8,2);fr(g,c2,5,7,1,5);fr(g,c2,7,7,1,5);fr(g,c2,9,7,1,5);fr(g,c3,6,12,4,1)}
+    else if(style===3){fr(g,c1,4,8,8,6);fr(g,c2,5,6,6,2);fr(g,c3,7,3,2,3);fr(g,"#e8f4f8",6,1,1,2);fr(g,"#e8f4f8",9,0,1,3)}
+    else if(style===4){fr(g,c1,3,4,10,10);fr(g,c2,4,5,8,3);fr(g,c3,7,2,2,2);fr(g,"#e8f4f8",6,0,1,2);fr(g,"#e8f4f8",9,1,1,1);fr(g,c2,5,12,6,1)}
+    else if(style===5){fr(g,c1,3,1,10,14);fr(g,c2,4,2,8,12);fr(g,c3,6,4,4,4);fr(g,c3,6,9,4,4);fr(g,"#2b2330",7,6,2,1)}
+    else if(style===6){fr(g,"#55555c",7,4,2,9);fr(g,c1,4,1,8,4);fr(g,c2,5,2,6,2);fr(g,c3,6,12,4,2);fr(g,"#f2d24b",5,4,6,1)}
+    else{fr(g,c1,2,5,12,7);fr(g,c2,3,6,10,5);fr(g,"#2b2330",11,7,1,3);fr(g,c3,4,12,2,2);fr(g,c3,10,12,2,2)}
+  });};
+  const dDesk=(id,c1,c2,c3,style)=>{SPR["dec_"+id]=mkTile(g=>{
+    if(style===0){fr(g,c1,1,6,14,3);fr(g,c2,2,9,12,6);fr(g,c3,9,3,5,3);fr(g,"#fff6d8",10,4,3,1);fr(g,c2,2,12,2,3);fr(g,c2,12,12,2,3)}
+    else if(style===1){fr(g,c1,2,2,12,13);fr(g,c2,3,3,10,11);fr(g,c3,6,7,4,4);fr(g,"#e8e4da",7,8,2,2);fr(g,c2,4,4,2,2);fr(g,c2,10,4,2,2)}
+    else if(style===2){fr(g,c1,3,2,10,12);fr(g,c2,4,3,8,4);fr(g,"#b7e0a8",5,4,6,2);fr(g,c3,4,8,2,2);fr(g,c3,7,8,2,2);fr(g,c3,10,8,2,2);fr(g,c3,4,11,2,2);fr(g,c3,7,11,2,2);fr(g,c3,10,11,2,2)}
+    else if(style===3){fr(g,c1,2,1,12,14);fr(g,c2,3,2,10,2);fr(g,c2,3,5,10,1);fr(g,c2,3,8,10,1);fr(g,c2,3,11,10,1);fr(g,c3,4,6,1,2);fr(g,c3,4,9,1,2);fr(g,c3,4,12,1,2)}
+    else if(style===4){fr(g,c1,1,5,14,4);fr(g,c2,2,6,12,2);fr(g,c1,2,9,3,5);fr(g,c1,11,9,3,5);fr(g,c3,5,2,5,3);fr(g,"#fff6d8",6,3,3,1)}
+    else if(style===5){fr(g,c1,0,6,16,3);fr(g,c2,1,7,14,1);fr(g,c1,2,9,2,6);fr(g,c1,12,9,2,6);fr(g,c3,5,4,2,2);fr(g,c3,9,4,2,2)}
+    else if(style===6){fr(g,c1,4,1,8,8);fr(g,c2,5,2,6,6);fr(g,"#fff6d8",6,3,4,2);fr(g,c3,7,5,2,1);fr(g,c1,7,9,2,6);fr(g,c2,4,14,8,1)}
+    else{fr(g,c2,6,6,4,3);fr(g,c1,5,8,6,6);fr(g,c3,6,9,4,2);fr(g,c1,7,12,2,3);fr(g,c2,5,15,6,1);fr(g,"#f2c9a0",6,3,4,4)}
+  });};
+  const dStudio=(id,c1,c2,c3,style)=>{SPR["dec_"+id]=mkTile(g=>{
+    if(style===0){fr(g,c1,1,1,14,13);fr(g,c2,2,2,12,11);fr(g,c3,3,3,10,2);fr(g,c3,3,6,10,1);fr(g,c3,3,9,8,1);fr(g,"#55555c",7,14,2,2)}
+    else if(style===1){fr(g,c2,4,1,8,8);fr(g,c1,5,2,6,6);fr(g,c3,6,3,4,4);fr(g,"#55555c",7,9,2,5);fr(g,c2,5,14,6,1)}
+    else if(style===2){fr(g,c1,2,4,3,10);fr(g,c1,11,4,3,10);fr(g,c2,4,3,8,3);fr(g,"#2b2330",5,4,6,2);fr(g,c3,6,4,4,2);fr(g,c2,7,6,2,6)}
+    else if(style===3){fr(g,c1,1,4,14,9);fr(g,c2,2,5,12,7);fr(g,c3,3,8,2,2);fr(g,c3,6,8,2,2);fr(g,c3,9,8,2,2);fr(g,"#fff6d8",3,6,8,1);fr(g,c1,2,13,2,2);fr(g,c1,12,13,2,2)}
+    else{fr(g,c1,3,2,10,7);fr(g,c2,4,3,8,5);fr(g,c3,5,4,6,1);fr(g,c3,5,6,5,1);fr(g,"#55555c",7,9,2,5);fr(g,c2,5,14,6,1)}
+  });};
+  const dMisc=(id,c1,c2,c3,style)=>{SPR["dec_"+id]=mkTile(g=>{
+    if(style===0){fr(g,c1,1,9,14,4);fr(g,c2,2,8,12,2);fr(g,c1,3,13,2,2);fr(g,c1,11,13,2,2);fr(g,c3,3,3,3,5);fr(g,c3,7,2,3,6);fr(g,c3,11,4,2,4)}
+    else if(style===1){fr(g,c1,2,1,12,14);fr(g,c2,3,2,10,12);fr(g,c3,4,3,8,3);fr(g,c3,4,7,8,3);fr(g,c3,4,11,8,2);fr(g,"#e8f4f8",5,4,2,1)}
+    else if(style===2){fr(g,c1,5,7,6,7);fr(g,c2,4,6,8,2);fr(g,c3,6,2,4,4);fr(g,"#fff6d8",7,3,2,2);fr(g,c2,3,14,10,1)}
+    else if(style===3){fr(g,c1,2,7,5,7);fr(g,c1,9,7,5,7);fr(g,c2,3,5,4,3);fr(g,c2,9,5,4,3);fr(g,c3,3,8,3,2);fr(g,c3,10,8,3,2);fr(g,"#f2d24b",6,4,1,3)}
+    else if(style===4){fr(g,"#f2c9a0",5,2,6,7);fr(g,"#f2c9a0",3,3,2,2);fr(g,"#f2c9a0",11,3,2,2);fr(g,c1,4,8,8,6);fr(g,c2,5,9,6,4);fr(g,c3,7,10,2,2);fr(g,"#2b2330",7,6,1,1);fr(g,"#2b2330",9,6,1,1)}
+    else{fr(g,c1,2,2,12,13);fr(g,c2,3,3,10,11);fr(g,c3,4,4,3,4);fr(g,c3,8,4,3,4);fr(g,"#f2d24b",5,5,1,2);fr(g,"#f2d24b",9,5,1,2);fr(g,c3,4,9,7,1)}
+  });};
+  /* 座位 / 绿植 */
+  dSeat("relaxsofa","#e8b04a","#c99232","#f4cc7a",0);
+  dSeat("gamechair","#333c48","#3f7fc1","#d94f45",1);
+  dSeat("massage","#8a3a2c","#a34a38","#f2d24b",2);
+  dPlant("hangplant","#c96a3a","#5ba14e","#7ac468",0);
+  dPlant("succulent","#c96a3a","#6aa85a","#8ac478",1);
+  dPlant("tallplant","#8a5a34","#4a9642","#6ab85a",2);
+  dPlant("zengarden","#6a6662","#5ba14e","#7ac468",3);
+  /* 屏幕 / 墙面 */
+  dScreen("whitebd","#8a5a34","#f4efe2","#3f7fc1",0);
+  dScreen("tvwall","#333c48","#1d2530","#3f7fc1",1);
+  dScreen("lightbox","#6a6a72","#fff6d8","#f2a24b",2);
+  dScreen("neon","#b23a32","#2b2330","#d96aa0",3);
+  dWall("honorwall","#8a5a34","#f4efe2","#f2a24b",0);
+  dWall("motto","#5a3a28","#f4efe2","#d94f45",1);
+  dWall("mirror2","#c8a24a","#b8dcee","#e8f4f8",2);
+  /* 设备 / 电器 */
+  dApp("micro","#e8e4da","#b8b4aa","#55555c",0);
+  dApp("cooler","#e8e4da","#c8c4ba","#8ec7e0",1);
+  dApp("airpur","#f0ece2","#d8d4ca","#8ec7e0",2);
+  dApp("aroma","#8a6fb8","#a888d0","#f2d24b",3);
+  dApp("humid","#8ec7e0","#b8dcee","#fff6d8",4);
+  dApp("speaker","#333c48","#4a5462","#f2a24b",5);
+  dApp("floorlamp","#8a6a4a","#f4e3bc","#ffe89a",6);
+  dApp("projector","#e8e4da","#c8c4ba","#8ec7e0",7);
+  /* 仓储 / 打包 */
+  dBox("trolley","#c9924a","#8a8a92","#d9a85e",0);
+  dBox("parcelcab","#d94f45","#b23a32","#f2a24b",1);
+  dBox("rack","#8a5a34","#6a4426","#c9924a",2);
+  dBox("packtb","#c9924a","#8a5a34","#f2d24b",3);
+  dBox("labeler","#3f7fc1","#2f5f92","#fff6d8",4);
+  dBox("sealer","#f2a24b","#c8823a","#55555c",5);
+  dBox("scanner","#333c48","#4a5462","#d94f45",6);
+  dBox("scale2","#e8e4da","#c8c4ba","#5ba14e",7);
+  dBox("printer","#e8e4da","#b8b4aa","#55555c",8);
+  /* 办公 / 管理 */
+  dDesk("cashier","#8a5a34","#c9924a","#3f7fc1",0);
+  dDesk("safe","#4a5462","#333c48","#c8a24a",1);
+  dDesk("calc","#55555c","#6a6a72","#f2a24b",2);
+  dDesk("filecab","#a8a4aa","#c8c4ca","#55555c",3);
+  dDesk("bosstable","#5a3a28","#8a5a34","#c9924a",4);
+  dDesk("meettable","#8a5a34","#c9924a","#3f7fc1",5);
+  dDesk("puncher","#333c48","#4a5462","#f2d24b",6);
+  dDesk("mannequin","#d96aa0","#f2c9a0","#fff6d8",7);
+  /* 直播 / 展示 / 杂项 */
+  dStudio("backdrop","#8a6fb8","#b8a4d8","#f2d24b",0);
+  dStudio("ringlight","#333c48","#55555c","#fff6d8",1);
+  dStudio("phonestand","#333c48","#55555c","#8ec7e0",2);
+  dStudio("mixer","#333c48","#4a5462","#d94f45",3);
+  dStudio("prompter","#333c48","#4a5462","#fff6d8",4);
+  dMisc("snackcart","#c96a3a","#8a5a34","#f2d24b",0);
+  dMisc("samplecab","#8a5a34","#f4efe2","#c9924a",1);
+  dMisc("newtable","#3f7fc1","#2f5f92","#f2d24b",2);
+  dMisc("luckybag","#d94f45","#b23a32","#f2d24b",3);
+  dMisc("maneki","#f4e3bc","#d94f45","#f2d24b",4);
+  dMisc("trophycab","#8a5a34","#f4efe2","#f2a24b",5);
 }
 function bakeOfficeSkin(lv){
   lv=clamp(lv||1,1,6);
@@ -2722,8 +3006,9 @@ const UI={
       <div style="font-size:12px;font-weight:800;color:var(--blue);margin-bottom:6px">📺 视频专享（看视频免费解锁）</div>
       <div class="cardrow">${ads}</div>
       <div class="desc">${busy}</div>
-      <div class="panelclose"><button class="pxbtn sm green" onclick="UI.enterSceneEdit()">🎯 去场景里拖动调整</button>
+      <div class="decorfoot"><button class="pxbtn sm green" onclick="UI.enterSceneEdit()">🎯 去场景里拖动调整</button>
         <button class="pxbtn gray sm" style="margin-left:8px" onclick="UI.close()">完成布置</button></div>`);
+    $("#panel").scrollTop=0;
     $("#panelLayer").classList.add("decor");$("#panel").classList.add("decor");   // 编辑模式：全屏面板 + 场景金色框
     $("#decorBar").classList.remove("on");
     this._decorEdit=true;
